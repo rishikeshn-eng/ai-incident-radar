@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Incident Radar</title>
+<meta name="description" content="AI incident intelligence: AIID + AIAAIC + community reports, deduplicated, classified with Gemini into the MIT AI Risk taxonomy and safety failure modes, validated against human labels, with an emerging-signals detector.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10); --wash: rgba(42,120,214,0.08);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --critical:#d03b3b; --serious:#ec835a; --warning:#fab219; --good:#0ca30c;
+  --seq0:#f0efec; --seq1:#cde2fb; --seq2:#86b6ef; --seq3:#3987e5; --seq4:#256abf; --seq5:#104281;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10); --wash: rgba(57,135,229,0.14);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+    --seq0:#262624; --seq1:#0d366b; --seq2:#184f95; --seq3:#256abf; --seq4:#3987e5; --seq5:#86b6ef;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10); --wash: rgba(57,135,229,0.14);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --seq0:#262624; --seq1:#0d366b; --seq2:#184f95; --seq3:#256abf; --seq4:#3987e5; --seq5:#86b6ef;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--s1); }
+header, main { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+header { padding-top: 28px; }
+h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 36px 0 4px; }
+.sub { color: var(--ink-2); margin: 0 0 12px; max-width: 820px; }
+.note { color: var(--muted); font-size: 13px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 18px 0; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.tile .v { font-size: 28px; font-weight: 600; }
+.tile .l { color: var(--ink-2); font-size: 13px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-width: 0; }
+.card h3 { margin: 0 0 2px; font-size: 15px; }
+.card .note { margin: 0 0 10px; }
+.chart { position: relative; height: 300px; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+.pill { display: inline-block; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; color: var(--ink-2); margin: 1px 2px 1px 0; white-space: nowrap; }
+.sev { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sev i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.filters input, .filters select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); max-width: 100%; }
+.filters input[type=search] { flex: 1 1 260px; }
+.pager { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+button { font: inherit; font-size: 14px; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); cursor: pointer; }
+button:hover { background: var(--wash); }
+.heat td { text-align: center; font-variant-numeric: tabular-nums; font-size: 12px; padding: 4px 2px; border: 2px solid var(--surface); }
+.heat th { font-size: 12px; white-space: nowrap; }
+.sig { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 12px; }
+.sig .card .ratio { font-size: 22px; font-weight: 600; }
+.sig ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+details summary { cursor: pointer; color: var(--ink-2); }
+footer { max-width: 1180px; margin: 40px auto; padding: 0 16px; color: var(--muted); font-size: 13px; }
+tr.inc:hover { background: var(--wash); }
+</style>
+</head>
+<body>
+<header>
+  <h1>AI Incident Radar</h1>
+  <p class="sub">Aviation has accident investigators; AI mostly has news cycles. This pipeline merges the
+  <a href="https://incidentdatabase.ai">AI Incident Database</a>, the <a href="https://www.aiaaic.org/aiaaic-repository">AIAAIC Repository</a>
+  and Hacker News reports, deduplicates them with embeddings, classifies every incident with Gemini into the
+  <a href="https://airisk.mit.edu">MIT AI Risk Repository</a> domains plus safety failure modes, checks the classifier against human labels, and flags what is rising in the last 90 days.
+  Refreshed weekly by GitHub Actions. <a href="https://github.com/rishikeshn-eng/ai-incident-radar">Code &amp; method</a>.</p>
+  <div class="note" id="asof"></div>
+  <div class="tiles" id="tiles"></div>
+</header>
+<main>
+  <h2>Emerging signals, last 90 days</h2>
+  <p class="sub">Categories whose share of dated incidents in the last 90 days is significantly higher than in the previous 365 days
+  (log share-ratio z ≥ 2, at least 3 incidents). Share, not count, so overall growth in AI coverage does not flag everything.</p>
+  <div class="sig" id="signals"></div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><h3>Highest-severity recent incidents</h3><p class="note">Severity 4–5 in the window, by severity then community attention.</p><div class="scroll"><table id="severe"></table></div></div>
+    <div class="card"><h3>All tested categories</h3><p class="note">Every category tested, sorted by z. Flagged rows are marked ▲.</p><div class="scroll" style="max-height:360px;overflow:auto"><table id="alltests"></table></div></div>
+  </div>
+
+  <h2>Trends</h2>
+  <p class="sub">Counts reflect what gets reported and curated, not true incidence. Read shares more than raw counts. The current year is partial.</p>
+  <div class="grid2">
+    <div class="card"><h3>Incidents per year by MIT risk domain</h3><p class="note">Canonical incidents after cross-source deduplication.</p><div class="chart"><canvas id="cDomain"></canvas></div></div>
+    <div class="card"><h3>Share of incidents involving a frontier-LLM vendor</h3><p class="note">OpenAI, Google, Anthropic, Meta, xAI, Microsoft, DeepSeek, Mistral. Band = 95% Wilson CI.</p><div class="chart"><canvas id="cLLM"></canvas></div></div>
+  </div>
+  <div class="card" style="margin-top:16px"><h3>Failure-mode share by year</h3><p class="note">Percent of that year's incidents tagged with each failure mode (multi-label, so columns do not sum to 100). Darker = larger share.</p><div class="scroll"><table class="heat" id="heat"></table></div></div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><h3>Model family, last two years</h3><p class="note" id="mfnote"></p><div class="chart" style="height:340px"><canvas id="cMF"></canvas></div></div>
+    <div class="card"><h3>Sector, last two years</h3><p class="note">Sector of deployment as classified.</p><div class="chart" style="height:340px"><canvas id="cSector"></canvas></div></div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><h3>Mean severity by year</h3><p class="note">1 = near-miss … 5 = loss of life / systemic. Bars = 95% CI.</p><div class="chart"><canvas id="cSev"></canvas></div></div>
+    <div class="card"><h3>Harm type by year</h3><p class="note">Multi-label counts.</p><div class="chart"><canvas id="cHarm"></canvas></div></div>
+  </div>
+
+  <h2>Does the classifier agree with humans?</h2>
+  <p class="sub">Gemini labels were produced blind to the reference labels. Cohen's κ with 95% bootstrap CIs. The CSET row compares against
+  human–human agreement between CSET annotators on the same incidents, the realistic ceiling.</p>
+  <div class="card"><div class="scroll"><table id="valtable"></table></div>
+  <p class="note" id="valnote"></p></div>
+
+  <h2>Incident explorer</h2>
+  <div class="filters">
+    <input type="search" id="q" placeholder="Search titles, summaries, systems, deployers…" aria-label="Search">
+    <select id="fSrc" aria-label="Source"><option value="">All sources</option><option value="aiid">AIID</option><option value="aiaaic">AIAAIC</option><option value="hn">Hacker News</option><option value="reddit">Reddit</option></select>
+    <select id="fDom" aria-label="MIT domain"><option value="">All MIT domains</option></select>
+    <select id="fFm" aria-label="Failure mode"><option value="">All failure modes</option></select>
+    <select id="fSec" aria-label="Sector"><option value="">All sectors</option></select>
+    <select id="fMf" aria-label="Model family"><option value="">All model families</option></select>
+    <select id="fSev" aria-label="Minimum severity"><option value="1">Severity ≥ 1</option><option value="2">≥ 2</option><option value="3">≥ 3</option><option value="4">≥ 4</option><option value="5">= 5</option></select>
+    <select id="fYear" aria-label="Year from"><option value="">Any year</option></select>
+  </div>
+  <div class="note" id="count"></div>
+  <div class="scroll"><table id="tbl"></table></div>
+  <div class="pager"><button id="prev">← Prev</button><span class="note" id="page"></span><button id="next">Next →</button><button id="dl">Download filtered CSV</button></div>
+</main>
+<footer>Data: AI Incident Database (CC BY-SA 4.0 snapshot), AIAAIC Repository (CC BY-SA 4.0), Hacker News via Algolia. Labels are model-generated and imperfect; see validation above. Built by <a href="https://github.com/rishikeshn-eng">rishikeshn-eng</a>.</footer>
+
+<script>
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const S = () => [1,2,3,4,5,6,7,8].map(i => css('--s'+i));
+const DOM = {"1":"Discrimination & Toxicity","2":"Privacy & Security","3":"Misinformation","4":"Malicious Actors & Misuse","5":"Human-Computer Interaction","6":"Socioeconomic & Environmental","7":"AI System Safety & Failures"};
+const SEVC = s => ({1:'--good',2:'--seq3',3:'--warning',4:'--serious',5:'--critical'})[s];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const pretty = s => String(s).replace(/_/g,' ');
+const pct = x => (100*x).toFixed(1)+'%';
+let D = {}, charts = [];
+
+async function load() {
+  const get = f => fetch('data/'+f).then(r => r.json());
+  [D.inc, D.tr, D.sig, D.sum, D.val] = await Promise.all(['incidents.json','trends.json','signals.json','summary.json','validation.json'].map(get));
+  render();
+}
+
+function baseOpts(stacked) {
+  Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+  Chart.defaults.color = css('--ink-2');
+  return { responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, color: css('--ink-2') } },
+               tooltip: { backgroundColor: css('--surface'), titleColor: css('--ink'), bodyColor: css('--ink-2'), borderColor: css('--axis'), borderWidth: 1 } },
+    scales: { x: { stacked, grid: { display: false }, border: { color: css('--axis') }, ticks: { color: css('--muted') } },
+              y: { stacked, beginAtZero: true, grid: { color: css('--grid') }, border: { display: false }, ticks: { color: css('--muted') } } } };
+}
+
+function tiles() {
+  const s = D.sum, v = D.val[s.classifier] || {};
+  const k = v.mit?.domain_7class?.kappa;
+  const items = [
+    [s.n_incidents.toLocaleString(), 'canonical incidents'],
+    [Object.values(s.ingest_counts).reduce((a,b)=>a+b,0).toLocaleString(), 'source records ingested'],
+    [s.dedupe.aiaaic_merged_into_aiid.toLocaleString(), 'AIAAIC↔AIID duplicates merged'],
+    [k ? `κ ${k.value.toFixed(2)}` : '–', 'agreement with MIT domain labels'],
+    [D.sig.flagged.length, 'emerging signals flagged'],
+  ];
+  document.getElementById('tiles').innerHTML = items.map(([v,l]) => `<div class="tile"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+  document.getElementById('asof').textContent = `Data as of ${D.sig.as_of} · AIID snapshot ${s.aiid_snapshot} · classifier ${s.classifier} · Reddit: ${s.reddit_status}`;
+}
+
+function signals() {
+  const f = D.sig.flagged.filter(x => x.dimension !== 'mit_subdomain' || true).slice(0, 9);
+  document.getElementById('signals').innerHTML = f.length ? f.map(s => `<div class="card">
+    <div class="note">${esc(pretty(s.dimension))}</div><h3>${esc(pretty(s.label))}</h3>
+    <div><span class="ratio">×${s.share_ratio}</span> <span class="note">share vs baseline · z = ${s.z}</span></div>
+    <div class="note">${s.recent} incidents in window (${pct(s.recent_share)}) vs ${s.baseline} in prior year (${pct(s.baseline_share)})</div>
+    <ul>${s.examples.slice(0,3).map(e => `<li><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}</a> <span class="note">${esc(e.date)}</span></li>`).join('')}</ul></div>`).join('')
+    : '<div class="card">No category passed the threshold this week.</div>';
+  document.getElementById('severe').innerHTML = '<tr><th>Date</th><th>Incident</th><th>Failure</th><th class="num">Sev.</th></tr>' +
+    D.sig.severe_recent.map(r => `<tr><td class="num">${esc(r.date)}</td><td><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a></td><td>${esc(pretty(r.failure))}</td><td class="num">${sevBadge(r.severity)}</td></tr>`).join('');
+  document.getElementById('alltests').innerHTML = '<tr><th>Dimension</th><th>Category</th><th class="num">Recent</th><th class="num">Prior yr</th><th class="num">×share</th><th class="num">z</th></tr>' +
+    D.sig.signals.slice(0, 80).map(s => `<tr><td>${esc(pretty(s.dimension))}</td><td>${s.flag ? '▲ ' : ''}${esc(pretty(s.label))}</td><td class="num">${s.recent}</td><td class="num">${s.baseline}</td><td class="num">${s.share_ratio}</td><td class="num">${s.z}</td></tr>`).join('');
+}
+
+function sevBadge(s) { return `<span class="sev"><i style="background:${css(SEVC(s))}"></i>${s}</span>`; }
+
+function trendCharts() {
+  charts.forEach(c => c.destroy()); charts = [];
+  const pal = S(), t = D.tr;
+  // Domain stacked bars, fixed slot order by domain number.
+  const bd = t.by_domain, doms = Object.values(DOM);
+  const order = Object.keys(bd.series).sort((a,b) => doms.indexOf(a) - doms.indexOf(b));
+  charts.push(new Chart(cDomain, { type: 'bar', data: { labels: bd.years, datasets: order.map((k,i) => ({ label: k, data: bd.series[k], backgroundColor: pal[i], borderColor: css('--surface'), borderWidth: { top: 2 }, borderRadius: 2 })) }, options: baseOpts(true) }));
+  // LLM share with CI band.
+  const ls = t.llm_share_by_year;
+  const o = baseOpts(false); o.scales.y.ticks.callback = v => (v*100).toFixed(0)+'%'; o.scales.y.max = 1;
+  o.plugins.legend.display = false;
+  o.plugins.tooltip.callbacks = { label: c => c.datasetIndex === 2 ? `share ${pct(c.raw)}  (95% CI ${pct(ls.ci95[c.dataIndex][0])}–${pct(ls.ci95[c.dataIndex][1])})` : null };
+  charts.push(new Chart(cLLM, { type: 'line', data: { labels: ls.years, datasets: [
+    { data: ls.ci95.map(c => c[0]), borderWidth: 0, pointRadius: 0, fill: false },
+    { data: ls.ci95.map(c => c[1]), borderWidth: 0, pointRadius: 0, fill: '-1', backgroundColor: css('--wash') },
+    { label: 'LLM-vendor share', data: ls.share, borderColor: pal[0], borderWidth: 2, pointRadius: 3, pointBackgroundColor: pal[0] } ] }, options: o }));
+  // Heatmap table.
+  const fm = t.by_failure_mode, yrs = fm.years.filter(y => y >= 2015);
+  const keys = Object.keys(fm.series).sort((a,b) => sum(fm.series[b]) - sum(fm.series[a]));
+  const steps = ['--seq0','--seq1','--seq2','--seq3','--seq4','--seq5'].map(css);
+  let h = '<tr><th></th>' + yrs.map(y => `<th>${y}</th>`).join('') + '</tr>';
+  for (const k of keys) {
+    h += `<tr><th>${esc(pretty(k))}</th>` + yrs.map(y => {
+      const i = fm.years.indexOf(y), n = fm.totals[i] || 0, c = fm.series[k][i] || 0, s = n ? c/n : 0;
+      const st = s === 0 ? 0 : s < .03 ? 1 : s < .08 ? 2 : s < .15 ? 3 : s < .3 ? 4 : 5;
+      const ink = st >= 4 ? '#fff' : css('--ink');
+      return `<td title="${esc(pretty(k))} ${y}: ${c} of ${n} (${pct(s)})" style="background:${steps[st]};color:${st>=3 && document.documentElement.dataset.theme!=='light' && matchMedia('(prefers-color-scheme: dark)').matches ? css('--ink') : ink}">${n ? Math.round(100*s) : ''}</td>`; }).join('') + '</tr>';
+  }
+  heat.innerHTML = h;
+  // Model family / sector: last two full-ish years, single hue horizontal bars.
+  const recentYears = new Set([t.last_full_year, t.last_full_year + 1]);
+  const agg = key => { const c = {}; D.inc.filter(r => recentYears.has(r.y)).forEach(r => c[r[key]] = (c[r[key]]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1]); };
+  const hbar = (el, rows) => { const o = baseOpts(false); o.indexAxis = 'y'; o.plugins.legend.display = false; o.scales.x.grid = { color: css('--grid') }; o.scales.y.grid = { display: false };
+    return new Chart(el, { type: 'bar', data: { labels: rows.map(r => pretty(r[0])), datasets: [{ label: 'incidents', data: rows.map(r => r[1]), backgroundColor: pal[0], borderRadius: 3, barThickness: 14 }] }, options: o }); };
+  charts.push(hbar(cMF, agg('mf')));
+  charts.push(hbar(cSector, agg('sec')));
+  mfnote.textContent = `Incidents dated ${t.last_full_year}–${t.last_full_year+1}. "unspecified or not llm" covers classic ML and unnamed systems.`;
+  // Severity with CI.
+  const sv = t.severity_by_year, so = baseOpts(false); so.plugins.legend.display = false; so.scales.y.min = 1; so.scales.y.max = 5; so.scales.y.beginAtZero = false;
+  so.plugins.tooltip.callbacks = { label: c => `mean ${sv.mean[c.dataIndex].toFixed(2)} (95% CI ${sv.ci95[c.dataIndex][0].toFixed(2)}–${sv.ci95[c.dataIndex][1].toFixed(2)})` };
+  charts.push(new Chart(cSev, { type: 'line', data: { labels: sv.years, datasets: [
+    { data: sv.mean, borderColor: pal[1], pointBackgroundColor: pal[1], borderWidth: 2, pointRadius: 3 } ] },
+    options: so, plugins: [{ id: 'err', afterDatasetsDraw(ch) { const { ctx, scales: { x, y } } = ch; ctx.save(); ctx.strokeStyle = css('--muted'); ctx.lineWidth = 1;
+      sv.ci95.forEach((c,i) => { const px = x.getPixelForValue(i); ctx.beginPath(); ctx.moveTo(px, y.getPixelForValue(c[0])); ctx.lineTo(px, y.getPixelForValue(c[1])); ctx.stroke(); }); ctx.restore(); } }] }));
+  const hb = t.by_harm_type, hk = Object.keys(hb.series).sort((a,b) => sum(hb.series[b]) - sum(hb.series[a]));
+  const top = hk.slice(0, 7), rest = hk.slice(7);
+  const ds = top.map((k,i) => ({ label: pretty(k), data: hb.series[k], backgroundColor: pal[i], borderColor: css('--surface'), borderWidth: { top: 2 }, borderRadius: 2 }));
+  if (rest.length) ds.push({ label: 'other', data: hb.years.map((_,i) => rest.reduce((a,k) => a + hb.series[k][i], 0)), backgroundColor: css('--axis') });
+  charts.push(new Chart(cHarm, { type: 'bar', data: { labels: hb.years, datasets: ds }, options: baseOpts(true) }));
+}
+const sum = a => a.reduce((x,y) => x+y, 0);
+
+function validation() {
+  const m = D.sum.classifier, v = D.val[m]; if (!v) { valtable.innerHTML = '<tr><td>Validation not run yet.</td></tr>'; return; }
+  const hh = D.val.human_human_baseline_cset || {};
+  const ci = o => o ? `${o.value.toFixed(2)} <span class="note">[${o.ci95[0].toFixed(2)}, ${o.ci95[1].toFixed(2)}]</span>` : '–';
+  const rows = [
+    ['MIT', 'Risk domain (7 classes)', v.mit.domain_7class, '–'],
+    ['MIT', 'Risk subdomain (24 classes)', v.mit.subdomain, '–'],
+    ['MIT', 'Entity (AI / Human / Other)', v.mit.entity, '–'],
+    ['MIT', 'Intent', v.mit.intent, '–'],
+    ['MIT', 'Timing (pre/post deployment)', v.mit.timing, '–'],
+    ['CSET v1', 'Sector (coarse, 10 classes)', v.cset.sector_coarse, hh.sector_coarse?.weighted_mean_kappa],
+    ['CSET v1', 'Intentional harm', v.cset.intentional_harm, hh.intentional_harm?.weighted_mean_kappa],
+    ['AIAAIC', 'Deepfake tag', { kappa: v.aiaaic.deepfake.kappa, n: v.aiaaic.deepfake.n }, '–'],
+    ['AIAAIC', 'Privacy tag', { kappa: v.aiaaic.privacy.kappa, n: v.aiaaic.privacy.n }, '–'],
+    ['AIAAIC', 'Fairness / bias tag', { kappa: v.aiaaic.bias.kappa, n: v.aiaaic.bias.n }, '–'],
+  ];
+  valtable.innerHTML = '<tr><th>Reference</th><th>Field</th><th class="num">n</th><th class="num">Gemini κ [95% CI]</th><th class="num">Accuracy</th><th class="num">Human–human κ</th></tr>' +
+    rows.map(([r,f,o,h]) => `<tr><td>${r}</td><td>${f}</td><td class="num">${o.n ?? o.kappa?.n ?? ''}</td><td class="num">${ci(o.kappa)}</td><td class="num">${o.accuracy ? o.accuracy.value.toFixed(2) : '–'}</td><td class="num">${typeof h === 'number' ? h.toFixed(2) : h}</td></tr>`).join('') +
+    `<tr><td>CSET v1</td><td>Severity vs tangible-harm level (Spearman ρ)</td><td class="num">${v.cset.severity_vs_tangible_harm_spearman.n}</td><td class="num">${ci(v.cset.severity_vs_tangible_harm_spearman)}</td><td class="num">–</td><td class="num">–</td></tr>` +
+    `<tr><td>CSET v1</td><td>Severity AUROC for "lives lost &gt; 0"</td><td class="num">${v.cset.severity_auc_lives_lost.n}</td><td class="num">${ci(v.cset.severity_auc_lives_lost)}</td><td class="num">–</td><td class="num">–</td></tr>`;
+  valnote.textContent = 'κ: 0.41–0.60 moderate, 0.61–0.80 substantial, > 0.80 near-perfect (Landis & Koch). Full confusion matrices are in results/validation.json.';
+}
+
+// ---------------- explorer
+let page = 0, rows = [];
+function fillSelect(el, vals, fmt = pretty) { el.innerHTML += vals.map(v => `<option value="${esc(v)}">${esc(fmt(v))}</option>`).join(''); }
+function initFilters() {
+  const uniq = k => [...new Set(D.inc.flatMap(r => Array.isArray(r[k]) ? r[k] : [r[k]]))].filter(Boolean).sort();
+  fillSelect(fDom, Object.keys(DOM), k => `${k}. ${DOM[k]}`);
+  fillSelect(fFm, uniq('fm')); fillSelect(fSec, uniq('sec')); fillSelect(fMf, uniq('mf'));
+  fillSelect(fYear, [...new Set(D.inc.map(r => r.y).filter(Boolean))].sort((a,b)=>b-a), y => `${y} or later`);
+  for (const el of [q, fSrc, fDom, fFm, fSec, fMf, fSev, fYear]) el.addEventListener('input', () => { page = 0; filter(); });
+  prev.onclick = () => { if (page > 0) { page--; table(); } };
+  next.onclick = () => { if ((page+1)*50 < rows.length) { page++; table(); } };
+  dl.onclick = download;
+}
+function filter() {
+  const t = q.value.trim().toLowerCase(), sev = +fSev.value, y = +fYear.value || 0;
+  rows = D.inc.filter(r => (!fSrc.value || r.src.includes(fSrc.value)) && (!fDom.value || (r.dom||'')[0] === fDom.value)
+    && (!fFm.value || r.fm.includes(fFm.value)) && (!fSec.value || r.sec === fSec.value) && (!fMf.value || r.mf === fMf.value)
+    && r.sev >= sev && (!y || (r.y || 0) >= y)
+    && (!t || `${r.t} ${r.s} ${r.sys} ${r.dep} ${r.cn}`.toLowerCase().includes(t)));
+  table();
+}
+function table() {
+  count.textContent = `${rows.length.toLocaleString()} incidents match`;
+  page_.textContent = rows.length ? `${page*50+1}–${Math.min(rows.length,(page+1)*50)} of ${rows.length}` : '';
+  tbl.innerHTML = '<tr><th>Date</th><th>Incident</th><th>MIT</th><th>Failure modes</th><th>Sector / model</th><th class="num">Sev.</th></tr>' +
+    rows.slice(page*50, page*50+50).map(r => `<tr class="inc"><td class="num">${esc(r.d)}</td>
+      <td><a href="${esc(r.u)}" target="_blank" rel="noopener">${esc(r.t)}</a><div class="note">${esc(r.s)}</div><div>${r.src.map(s => `<span class="pill">${s}</span>`).join('')}${r.cm ? `<span class="pill">${r.cm} HN/Reddit</span>` : ''}</div></td>
+      <td>${esc(r.dom)}</td><td>${r.fm.map(f => `<span class="pill">${esc(pretty(f))}</span>`).join('')}</td>
+      <td>${esc(pretty(r.sec))}<div class="note">${esc(pretty(r.mf))}${r.sys ? ' · ' + esc(r.sys) : ''}</div></td><td class="num">${sevBadge(r.sev)}</td></tr>`).join('');
+}
+const page_ = document.getElementById('page');
+function download() {
+  const cols = ['id','d','t','s','dom','pfm','fm','sev','sec','mf','sys','dep','u'];
+  const q_ = v => `"${String(Array.isArray(v) ? v.join(';') : v ?? '').replace(/"/g,'""')}"`;
+  const blob = new Blob([cols.join(',') + '\n' + rows.map(r => cols.map(c => q_(r[c])).join(',')).join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ai-incidents-filtered.csv'; a.click();
+}
+
+function render() { tiles(); signals(); trendCharts(); validation(); initFilters(); filter(); }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { trendCharts(); signals(); table(); });
+load().catch(e => { document.getElementById('tiles').textContent = 'Failed to load data: ' + e; });
+</script>
+</body>
+</html>
