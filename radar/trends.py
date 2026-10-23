@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 
 from .common import PROC, RESULTS, SITE, write_json
+from .dedupe import cluster_topics
 from .taxonomy import FAILURE_MODES, MIT_DOMAINS, MIT_SUBDOMAINS
 
 from .classify import DEFAULT_MODEL as MODEL
@@ -37,10 +38,14 @@ def wilson(k, n, z=1.96):
 def load() -> pd.DataFrame:
     canon = pd.read_parquet(PROC / "canonical.parquet")
     lab = pd.read_parquet(PROC / f"labels_{MODEL}.parquet")
+    canon["crow"] = np.arange(len(canon))
     df = canon.merge(lab, on="uid", how="inner")
     # Curated databases are incidents by construction; community posts must pass the filter.
     keep = df["source"].isin(["aiid", "aiaaic"]) | df["is_ai_incident"].astype(bool)
+    emb = np.load(PROC / "canonical_emb.npy")
     df = df[keep].copy()
+    # Re-cluster only real incidents, so community noise does not form its own topics.
+    df["cluster"], df["cluster_name"] = cluster_topics(emb[df["crow"].to_numpy()], df["title"].tolist())
     df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
     df["domain"] = df["mit_subdomain"].str[0].map(MIT_DOMAINS)
     df["llm_related"] = df["model_family"].isin(LLM_FAMILIES)
@@ -168,10 +173,10 @@ def export_incidents(df: pd.DataFrame) -> list[dict]:
     for r in df.sort_values("date", ascending=False).itertuples():
         rows.append({
             "id": r.uid, "t": r.title, "s": r.summary, "d": r.date, "y": int(r.year) if r.year == r.year else None,
-            "src": r.sources, "u": r.url, "dom": r.mit_subdomain, "fm": r.failure_modes,
+            "src": [str(x) for x in r.sources], "u": r.url, "dom": r.mit_subdomain, "fm": [str(x) for x in r.failure_modes],
             "pfm": r.primary_failure_mode, "sev": int(r.severity), "sec": r.sector,
             "mf": r.model_family, "sys": r.system_name, "ent": r.entity, "int": r.intent,
-            "ht": r.harm_types, "cl": int(r.cluster), "cn": r.cluster_name,
+            "ht": [str(x) for x in r.harm_types], "cl": int(r.cluster), "cn": r.cluster_name,
             "dep": r.deployer[:80], "cm": int(r.community_mentions), "x": float(r.x), "yy": float(r.y),
         })
     return rows

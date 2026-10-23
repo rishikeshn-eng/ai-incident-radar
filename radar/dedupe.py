@@ -3,30 +3,38 @@
 Embeddings: BAAI/bge-base-en-v1.5 via fastembed (ONNX, CPU, 768-d), cached per record
 in data/processed/emb_cache.npz so weekly refreshes only embed new records.
 
-Dedupe rule (union-find):
-  * AIAAIC -> AIID      cosine >= T_INC and |year diff| <= 1
-  * HN/Reddit -> any    cosine >= T_NEWS (story is coverage of a known incident)
-  * HN/Reddit <-> HN    cosine >= T_NEWS and within 14 days (same story posted twice)
+Dedupe rule (retrieve, verify, union-find):
+  * candidates: each record's top-2 neighbours with cosine >= T_CAND_* (AIAAIC->AIID with
+    |year diff| <= 1; HN->any curated incident; HN<->HN within 30 days)
+  * every candidate pair is verified by an LLM judge (cached); confirmed pairs are merged
 Canonical record per group: AIID > AIAAIC > community (highest score).
-Thresholds are audited in validate.py with an LLM judge on stratified pairs.
+validate.py --dedupe-audit estimates how many duplicates fall below the candidate threshold.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+import random
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pandas as pd
-from sklearn.cluster import HDBSCAN
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from .common import PROC, ROOT, write_json
+from .common import LABELS, PROC, ROOT, read_jsonl, write_json
 
 EMB_MODEL = "BAAI/bge-base-en-v1.5"
 DIM = 768
-T_INC = 0.86
-T_NEWS = 0.84
+TOPK = 2
+N_TOPICS = 40
+T_CAND_INC = 0.76     # candidate retrieval thresholds (bge-base cosine), verified by the judge
+T_CAND_NEWS = 0.74
+T_FALLBACK = 0.90    # used only when no judge verdict is available
 CACHE = PROC / "emb_cache.npz"
 
 
@@ -81,46 +89,112 @@ class UF:
             self.p[max(a, b)] = min(a, b)
 
 
+JUDGE_MODEL = "gemini-3.1-flash-lite"
+JUDGE_CACHE = LABELS / f"dedupe_judge_{JUDGE_MODEL}.jsonl"
+JUDGE_BATCH = 40
+JUDGE_PROMPT = """You are deduplicating AI incident databases. For each numbered pair, decide whether
+A and B describe the SAME real-world incident: the same event, involving the same system/organisation
+and the same harmed party. A news story or follow-up (lawsuit, fine, investigation) about that same
+event counts as the same incident. Two different events of the same kind (e.g. two different robot
+accidents, two different deepfake scams, two lawyers citing fake cases) are NOT the same.
+Return a JSON array of objects {"pair": <number>, "same": true|false}, one per pair."""
+
+
+def _rec_str(r) -> str:
+    return f"{r['title']} ({str(r['date'])[:10]}). {r['text'][:350]}"
+
+
+def judge_pairs(df: pd.DataFrame, cands: list[tuple[int, int]]) -> dict[tuple[str, str], bool]:
+    """LLM verification of candidate duplicate pairs, cached by (uid_a, uid_b)."""
+    cache = {(r["a"], r["b"]): r["same"] for r in read_jsonl(JUDGE_CACHE)}
+    uids = df["uid"].to_numpy()
+    todo = [(i, j) for i, j in cands if (uids[i], uids[j]) not in cache]
+    print(f"[judge] {len(cands)} candidate pairs, {len(todo)} uncached", flush=True)
+    if todo and os.environ.get("GEMINI_API_KEY"):
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+        recs = df.to_dict("records")
+
+        def run(batch):
+            prompt = JUDGE_PROMPT + "\n\n" + "\n\n".join(
+                f"Pair {k}:\nA: {_rec_str(recs[i])}\nB: {_rec_str(recs[j])}" for k, (i, j) in enumerate(batch))
+            delay = 5
+            for attempt in range(6):
+                time.sleep(8 + random.random() * 4)  # keep well under the shared free-tier RPM
+                try:
+                    r = client.models.generate_content(
+                        model=JUDGE_MODEL, contents=prompt,
+                        config=types.GenerateContentConfig(temperature=0, response_mime_type="application/json"))
+                    out = {int(o["pair"]): bool(o["same"]) for o in json.loads(r.text) if "pair" in o}
+                    return [(batch[k], out[k]) for k in range(len(batch)) if k in out]
+                except Exception as e:
+                    print(f"[judge] retry {attempt}: {str(e)[:120]}", file=sys.stderr, flush=True)
+                    time.sleep(delay)
+                    delay = min(delay * 2, 120)
+            return []
+
+        batches = [todo[k:k + JUDGE_BATCH] for k in range(0, len(todo), JUDGE_BATCH)]
+        with ThreadPoolExecutor(2) as ex, open(JUDGE_CACHE, "a") as f:
+            for n, res in enumerate(ex.map(run, batches), 1):
+                for (i, j), same in res:
+                    cache[(uids[i], uids[j])] = same
+                    f.write(json.dumps({"a": uids[i], "b": uids[j], "same": same}) + "\n")
+                f.flush()
+                if n % 10 == 0:
+                    print(f"  judged {n}/{len(batches)} batches", flush=True)
+    return cache
+
+
 def dedupe(df: pd.DataFrame, E: np.ndarray):
+    """Retrieve candidates by embedding similarity, confirm with an LLM judge, merge via union-find.
+
+    Without an API key (or for pairs the judge never answered) fall back to a strict cosine
+    threshold T_FALLBACK.
+    """
     n = len(df)
     src = df["source"].to_numpy()
     year = df["year"].to_numpy(dtype=float)
     dates = pd.to_datetime(df["date"], errors="coerce")
-    is_aiid = src == "aiid"
-    is_aiaaic = src == "aiaaic"
     is_news = np.isin(src, ["hn", "reddit"])
+    pairs, cands = [], []  # pairs: (i, j, sim, kind, year_ok) for every best match (audit)
+
+    def year_ok(i, j):
+        return bool(np.isnan(year[i]) or np.isnan(year[j]) or abs(year[i] - year[j]) <= 1)
+
+    def topk(rows, cols, kind, t_cand, k=TOPK, extra=lambda i, j: True):
+        S = E[rows] @ E[cols].T
+        for r, i in enumerate(rows):
+            order = np.argsort(-S[r])[:k]
+            for rank, c in enumerate(order):
+                j, s = cols[c], float(S[r, c])
+                if j == i:
+                    continue
+                ok = year_ok(i, j) and extra(i, j)
+                if rank == 0:
+                    pairs.append((i, j, s, kind, ok))
+                if s >= t_cand and ok:
+                    cands.append((i, j, s, kind))
+
+    aiaaic, aiid = np.where(src == "aiaaic")[0], np.where(src == "aiid")[0]
+    topk(aiaaic, aiid, "aiaaic-aiid", T_CAND_INC)
+    news, inc = np.where(is_news)[0], np.where(~is_news)[0]
+    if len(news):
+        topk(news, inc, "news-incident", T_CAND_NEWS)
+        topk(news, news, "news-news", T_CAND_NEWS,
+             extra=lambda i, j: j > i and abs((dates[i] - dates[j]).days) <= 30)
+    verdict = judge_pairs(df, [(i, j) for i, j, _, _ in cands])
+    uids = df["uid"].to_numpy()
     uf = UF(n)
-    pairs = []  # (i, j, sim, kind) for the audit
-    S_inc = E[is_aiaaic] @ E[is_aiid].T
-    ia, ib = np.where(is_aiaaic)[0], np.where(is_aiid)[0]
-    for r, i in enumerate(ia):
-        j_loc = int(np.argmax(S_inc[r]))
-        s = float(S_inc[r, j_loc])
-        j = ib[j_loc]
-        ok_year = np.isnan(year[i]) or np.isnan(year[j]) or abs(year[i] - year[j]) <= 1
-        pairs.append((i, j, s, "aiaaic-aiid", bool(ok_year)))
-        if s >= T_INC and ok_year:
+    decided = []
+    for i, j, s, kind in cands:
+        v = verdict.get((uids[i], uids[j]))
+        same = bool(v) if v is not None else s >= T_FALLBACK
+        decided.append(dict(a=uids[i], b=uids[j], sim=s, kind=kind, same=same, judged=v is not None))
+        if same:
             uf.union(i, j)
-    inc_idx = np.where(~is_news)[0]
-    news_idx = np.where(is_news)[0]
-    if len(news_idx):
-        S_n = E[news_idx] @ E[inc_idx].T
-        for r, i in enumerate(news_idx):
-            j = inc_idx[int(np.argmax(S_n[r]))]
-            s = float(S_n[r].max())
-            pairs.append((i, j, s, "news-incident", True))
-            if s >= T_NEWS:
-                uf.union(i, j)
-        S_nn = E[news_idx] @ E[news_idx].T
-        np.fill_diagonal(S_nn, -1)
-        for r, i in enumerate(news_idx):
-            for c in np.where(S_nn[r] >= T_NEWS)[0]:
-                j = news_idx[c]
-                if j > i and abs((dates[i] - dates[j]).days) <= 14:
-                    uf.union(i, j)
-                    pairs.append((i, j, float(S_nn[r, c]), "news-news", True))
     groups = np.array([uf.find(i) for i in range(n)])
-    return groups, pairs
+    return groups, pairs, pd.DataFrame(decided)
 
 
 def score(r) -> tuple:
@@ -129,33 +203,50 @@ def score(r) -> tuple:
     return (pri, -(ex.get("points") or ex.get("score") or 0))
 
 
-def label_clusters(texts: list[str], labels: np.ndarray, k: int = 4) -> dict[int, str]:
-    """c-TF-IDF style: concatenate docs per cluster, take top distinctive terms."""
+NAME_STOP = {"ai", "reportedly", "allegedly", "purportedly", "usa", "technology", "purpose",
+             "hn", "hey", "show", "ask", "new", "says", "using", "used", "use", "accused",
+             "generated", "ai-generated", "artificial", "intelligence", "model", "models", "tool",
+             "tools", "app", "via", "just", "like", "people", "report", "study", "incident"}
+
+
+def label_clusters(titles: list[str], labels: np.ndarray, k: int = 4) -> dict[int, str]:
+    """c-TF-IDF style: concatenate titles per cluster, take the top distinctive terms."""
+    from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
     ids = sorted(set(labels) - {-1})
-    docs = [" ".join(t for t, l in zip(texts, labels) if l == c) for c in ids]
+    docs = [" ".join(t for t, l in zip(titles, labels) if l == c) for c in ids]
     if not docs:
         return {}
-    vec = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), min_df=1, max_df=0.5,
-                          token_pattern=r"(?u)\b[a-zA-Z][a-zA-Z\-]{2,}\b", sublinear_tf=True)
+    vec = TfidfVectorizer(stop_words=list(ENGLISH_STOP_WORDS | NAME_STOP), ngram_range=(1, 2),
+                          min_df=1, max_df=0.4, sublinear_tf=True,
+                          token_pattern=r"(?u)\b[a-zA-Z][a-zA-Z\-]{2,}\b")
     X = vec.fit_transform(docs)
     vocab = np.array(vec.get_feature_names_out())
     out = {}
     for row, c in enumerate(ids):
-        top = vocab[np.argsort(-X[row].toarray()[0])][:k * 2]
-        picked = []
-        for t in top:  # drop unigrams already inside a picked bigram
-            if not any(t in p or p in t for p in picked):
-                picked.append(t)
+        picked, words = [], set()
+        for t in vocab[np.argsort(-X[row].toarray()[0])][:k * 4]:
+            w = set(t.split())
+            if w & words:  # skip terms that repeat a word already shown
+                continue
+            picked.append(t)
+            words |= w
             if len(picked) == k:
                 break
         out[c] = " / ".join(picked)
     return out
 
 
+def cluster_topics(E: np.ndarray, titles: list[str], k: int = N_TOPICS):
+    cl = KMeans(k, n_init=4, random_state=0).fit_predict(E)
+    names = label_clusters(titles, cl)
+    return cl, [names.get(c, "unclustered") for c in cl]
+
+
 def main():
     df = pd.read_parquet(PROC / "records.parquet").reset_index(drop=True)
     E = embed([emb_text(r) for r in df.to_dict("records")])
-    groups, pairs = dedupe(df, E)
+    groups, pairs, decided = dedupe(df, E)
+    decided.to_parquet(PROC / "dedupe_decisions.parquet", index=False)
     df["group"] = groups
     pd.DataFrame([dict(a=df.uid[i], b=df.uid[j], sim=s, kind=k, year_ok=y)
                   for i, j, s, k, y in pairs]).to_parquet(PROC / "dedupe_pairs.parquet", index=False)
@@ -182,13 +273,12 @@ def main():
     canon = pd.DataFrame(canon_rows).reset_index(drop=True)
     Ec = E[canon["emb_row"].to_numpy()]
 
-    # Topic clusters over canonical incidents. PCA first: HDBSCAN struggles in 768-d.
-    Z = PCA(n_components=32, random_state=0).fit_transform(Ec)
-    Z /= np.linalg.norm(Z, axis=1, keepdims=True) + 1e-9
-    cl = HDBSCAN(min_cluster_size=8, min_samples=4, metric="euclidean").fit_predict(Z)
+    # Topic clusters over canonical incidents: k-means on unit vectors (spherical k-means).
+    # HDBSCAN left 60-80% of incidents as noise on this data at every setting tried, and
+    # silhouette was flat (~0.06) for k in 20..80, so k is chosen for readability.
+    cl, names = cluster_topics(Ec, canon.title.tolist())
     canon["cluster"] = cl
-    names = label_clusters([f"{t} {x[:300]}" for t, x in zip(canon.title, canon.text)], cl)
-    canon["cluster_name"] = [names.get(c, "unclustered") for c in cl]
+    canon["cluster_name"] = names
     # 2-D layout for the dashboard scatter.
     xy = PCA(n_components=2, random_state=0).fit_transform(Ec)
     canon["x"], canon["y"] = xy[:, 0].round(4), xy[:, 1].round(4)
@@ -205,7 +295,11 @@ def main():
                                                  if c["source"] in ("aiid", "aiaaic"))),
         "n_clusters": int(len(set(cl)) - (1 if -1 in cl else 0)),
         "unclustered_frac": round(float((cl == -1).mean()), 3),
-        "thresholds": {"T_INC": T_INC, "T_NEWS": T_NEWS},
+        "candidate_pairs": int(len(decided)),
+        "candidate_pairs_judged_same": int(decided["same"].sum()) if len(decided) else 0,
+        "judge_coverage": round(float(decided["judged"].mean()), 3) if len(decided) else None,
+        "judge_model": JUDGE_MODEL,
+        "thresholds": {"T_CAND_INC": T_CAND_INC, "T_CAND_NEWS": T_CAND_NEWS, "T_FALLBACK": T_FALLBACK, "TOPK": TOPK},
     }
     write_json(PROC / "dedupe_stats.json", stats, indent=2)
     print(json.dumps(stats, indent=2))

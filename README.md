@@ -22,13 +22,107 @@ This project builds the missing layer: a reproducible pipeline that merges these
 | Stage | Module | What happens |
 |---|---|---|
 | 1. Ingest | [`radar/ingest.py`](radar/ingest.py) | Latest AIID full snapshot (incidents + reports + taxonomy CSVs), the AIAAIC "Incidents" sheet, Hacker News stories via the Algolia API (40 incident-oriented queries, ≥20 points, last 455 days), Reddit public JSON (skipped if blocked, which it currently is: HTTP 403). |
-| 2. Dedupe + cluster | [`radar/dedupe.py`](radar/dedupe.py) | `bge-base-en-v1.5` embeddings (local ONNX via fastembed, cached). Union-find merge: AIAAIC→AIID at cosine ≥ T_INC with year ±1; HN→known incident at cosine ≥ T_NEWS; HN↔HN reposts within 14 days. HDBSCAN topic clusters on a 32-d PCA projection, named with c-TF-IDF. |
-| 3. Classify | [`radar/classify.py`](radar/classify.py) | Gemini (structured JSON output, temperature 0, 20 records per call) assigns: MIT AI Risk Repository subdomain (24) → domain (7), MIT entity / intent / timing, multi-label **failure modes** (hallucination, sycophancy, agent misuse, prompt injection, deepfake, bias, privacy, autonomy / loss-of-control signals, and 9 more), severity 1–5, harm types, sector, model family, and an `is_ai_incident` filter for community posts. Every response is cached in [`labels/`](labels), so reruns only pay for new incidents. |
+| 2. Dedupe + cluster | [`radar/dedupe.py`](radar/dedupe.py) | `bge-base-en-v1.5` embeddings (local ONNX via fastembed, cached). **Retrieve-then-verify:** each record's top-2 neighbours above a cosine floor (AIAAIC→AIID within ±1 year; HN→curated incidents; HN↔HN within 30 days) go to a batched Gemini judge ("same real-world event?", cached), and confirmed pairs are merged with union-find. Pure similarity thresholds failed here: two *different* fatal robot-arm accidents scored 0.83, while true duplicates sat at 0.75. Topic clusters: spherical k-means (k=40) on incidents that pass the incident filter, named with c-TF-IDF over titles. |
+| 3. Classify | [`radar/classify.py`](radar/classify.py) | Gemini `gemini-3.1-flash-lite` (structured JSON output, temperature 0, 20–25 records per call; blocked batches are bisected to isolate the record that triggers the filter) assigns: MIT AI Risk Repository subdomain (24) → domain (7), MIT entity / intent / timing, multi-label **failure modes** (hallucination, sycophancy, agent misuse, prompt injection, deepfake, bias, privacy, autonomy / loss-of-control signals, and 9 more), severity 1–5, harm types, sector, model family, and an `is_ai_incident` filter for community posts. Every response is cached in [`labels/`](labels), so reruns only pay for new incidents. |
 | 4. Validate | [`radar/validate.py`](radar/validate.py) | Cohen's κ, accuracy and macro-F1 with 1,000-sample bootstrap CIs against three independent label sets (below), plus a human–human baseline from CSET's individual annotator files and an LLM-judge audit of the dedupe thresholds. |
 | 5. Trends + signals | [`radar/trends.py`](radar/trends.py) | Yearly counts and shares by MIT domain, failure mode, sector, model family and harm type; mean severity with CIs; LLM-vendor share with Wilson CIs. **Emerging signals:** share of each category among day-dated incidents in the last 90 days vs the previous 365 days, as a log share-ratio z-test. |
-| 6. Publish | [`docs/`](docs), [`.github/workflows/refresh.yml`](.github/workflows/refresh.yml) | Static GitHub Pages dashboard (search, 7 filters, CSV export, charts, signal cards, validation table). A weekly GitHub Action reruns everything with the `GEMINI_API_KEY` repo secret and commits the refreshed data. |
+| 6. Report | [`radar/figures.py`](radar/figures.py), [`radar/report.py`](radar/report.py) | Figures, plus this README's Results section and `STATUS.md`, regenerated from `results/*.json` on every run. |
+| 7. Publish | [`docs/`](docs), [`.github/workflows/refresh.yml`](.github/workflows/refresh.yml) | Static GitHub Pages dashboard (search, 7 filters, CSV export, charts, signal cards, validation table). A weekly GitHub Action reruns everything with the `GEMINI_API_KEY` repo secret and commits the refreshed data. |
 
-{{RESULTS}}
+<!-- RESULTS:START -->
+## Results
+
+*Generated 2026-10-23 from AIID snapshot `20261019101022`; classifier `gemini-3.1-flash-lite`.*
+
+> **Partial run.** The free-tier Gemini quota (500 requests/day, shared with other projects) ran out before every record was classified. Unclassified records are left out of the trends below and are picked up automatically by the next run. Coverage: aiaaic 1008/2259, aiid 1747/1751, hn 0/705.
+
+### Data
+
+| Source | Records ingested | Classified | Canonical incidents (primary source) |
+|---|---:|---:|---:|
+| AI Incident Database | 1,751 | 1,747 | 1,726 |
+| AIAAIC Repository | 2,259 | 1,008 | 789 |
+| Hacker News (Algolia) | 1,282 | 0 | 0 |
+| Reddit | 0 | 0 | 0 |
+
+- Reddit: skipped (HTTP 403 / unreachable).
+- 577 Show/Launch/Ask/Tell HN posts are skipped before classification (product launches and discussions, not incident reports). Of the HN stories classified, only those the classifier marks `is_ai_incident` enter the analysis.
+- **Dedupe:** 942 candidate pairs retrieved by embedding similarity; the LLM judge confirmed 586 (96% of candidates judged; the rest fell back to cosine ≥ 0.9). **421 AIAAIC entries merged into AIID incidents**, so naive concatenation would double-count about 19% of AIAAIC. 5,292 records → 4,718 canonical incidents; 2,515 enter the analysis.
+
+### Classifier validation
+
+![Validation](docs/figures/validation_kappa.png)
+
+| Reference labels | Field | n | Gemini κ [95% CI] | Accuracy | Human–human κ |
+|---|---|---:|---:|---:|---:|
+| MIT (LLM-generated, see note) | Risk domain (7) | 1494 | 0.64 [0.61, 0.67] | 0.72 | – |
+| MIT (LLM-generated, see note) | Risk subdomain (24) | 1494 | 0.56 [0.53, 0.58] | 0.61 | – |
+| MIT (LLM-generated, see note) | Entity (AI/Human/Other) | 1494 | 0.55 [0.51, 0.59] | 0.77 | – |
+| MIT (LLM-generated, see note) | Intent | 1494 | 0.80 [0.77, 0.83] | 0.90 | – |
+| MIT (LLM-generated, see note) | Timing | 1494 | 0.38 [0.22, 0.52] | 0.97 | – |
+| CSET v1 (human) | Sector, 10 coarse classes | 201 | 0.66 [0.58, 0.73] | 0.72 | 0.65 |
+| CSET v1 (human) | Intentional harm | 191 | 0.25 [0.06, 0.43] | 0.87 | 0.66 |
+| CSET v1 (human) | Severity vs tangible-harm level (Spearman ρ) | 198 | 0.36 [0.24, 0.48] | – | (4-class tangible harm κ = 0.70) |
+| CSET v1 (human) | Severity AUROC: tangible harm occurred | 198 | 0.69 [0.61, 0.76] | – | – |
+| CSET v1 (human) | Severity AUROC: lives lost > 0 | 213 | 0.95 [0.87, 0.99] | – | – |
+| AIAAIC (editorial) | Deepfake (technology tag) | 1274 | 0.76 [0.70, 0.81] | F1 0.78 | – |
+| AIAAIC (editorial) | Privacy (ethical-issue tag) | 1274 | 0.69 [0.64, 0.74] | F1 0.75 | – |
+| AIAAIC (editorial) | Fairness/bias (ethical-issue tag) | 1274 | 0.60 [0.54, 0.66] | F1 0.66 | – |
+
+- **Sector** agreement with CSET's human annotators (κ 0.66) is in the range of CSET annotators agreeing with each other (κ 0.65). **Severity** ranks incidents with deaths almost perfectly (AUROC 0.95; mean severity 4.83 when lives were lost), but correlates only moderately with CSET's 4-level tangible-harm scale (ρ 0.36).
+- **Intentional harm is the weak field** (κ 0.25 vs human–human 0.66). Part of this is a construct mismatch: CSET asks whether the *system was designed* to harm, while the radar's `intent` asks whether *anyone* intended the harm, so a deepfake scam counts as intentional here but usually not in CSET.
+- **About the MIT reference:** the MIT risk-domain labels shipped in the AIID snapshot were themselves produced by an LLM pipeline (MIT AI Incident Tracker, Claude Sonnet, about 80% consistency with expert ratings per its authors). Agreement with them measures consistency between two model-based classifiers, not accuracy. The CSET rows are the human ground truth.
+- Full confusion matrices and per-domain precision/recall: [`results/validation.json`](results/validation.json).
+
+### Trends
+
+![Failure modes by year](docs/figures/failure_mode_heatmap.png)
+
+Share of incidents tagged with each failure mode, 2022 vs 2025 (95% Wilson CIs). Shares, not counts, because coverage grew.
+
+| Failure mode | 2022 | 2025 | Δ share |
+|---|---:|---:|---:|
+| deepfake | 12.1% [7.8%–18.3%] (18/149) | 36.8% [33.2%–40.6%] (240/652) | +24.7% |
+| fraud scam | 4.7% [2.3%–9.4%] (7/149) | 21.9% [18.9%–25.3%] (143/652) | +17.2% |
+| misinformation | 5.4% [2.8%–10.2%] (8/149) | 17.6% [14.9%–20.8%] (115/652) | +12.3% |
+| hallucination | 6.0% [3.2%–11.1%] (9/149) | 13.5% [11.1%–16.3%] (88/652) | +7.5% |
+| mental health | 0.7% [0.1%–3.7%] (1/149) | 6.0% [4.4%–8.1%] (39/652) | +5.3% |
+| agent misuse | 2.7% [1.1%–6.7%] (4/149) | 7.2% [5.5%–9.4%] (47/652) | +4.5% |
+| cyberattack | 0.0% [0.0%–2.5%] (0/149) | 4.0% [2.7%–5.8%] (26/652) | +4.0% |
+| sycophancy | 0.0% [0.0%–2.5%] (0/149) | 2.3% [1.4%–3.8%] (15/652) | +2.3% |
+| prompt injection | 1.3% [0.4%–4.8%] (2/149) | 1.7% [0.9%–3.0%] (11/652) | +0.3% |
+| autonomy loss of control | 0.0% [0.0%–2.5%] (0/149) | 0.1% [0.0%–0.9%] (1/652) | +0.1% |
+| ip copyright | 2.7% [1.1%–6.7%] (4/149) | 2.1% [1.3%–3.6%] (14/652) | -0.5% |
+| labor economic | 2.7% [1.1%–6.7%] (4/149) | 1.7% [0.9%–3.0%] (11/652) | -1.0% |
+| toxic content | 10.7% [6.7%–16.7%] (16/149) | 7.8% [6.0%–10.1%] (51/652) | -2.9% |
+| privacy | 12.1% [7.8%–18.3%] (18/149) | 7.7% [5.9%–10.0%] (50/652) | -4.4% |
+| bias | 10.7% [6.7%–16.7%] (16/149) | 2.8% [1.8%–4.3%] (18/652) | -8.0% |
+| physical safety | 13.4% [8.9%–19.8%] (20/149) | 3.8% [2.6%–5.6%] (25/652) | -9.6% |
+| robustness error | 32.9% [25.9%–40.8%] (49/149) | 15.2% [12.6%–18.1%] (99/652) | -17.7% |
+
+![LLM share](docs/figures/llm_share.png)
+
+Incidents tied to a frontier-LLM vendor went from 15% [11%–22%] of the total in 2022 to 33% [29%–36%] in 2025.
+
+### Emerging signals (last 90 days)
+
+![Emerging signals](docs/figures/emerging_signals.png)
+
+Window 2026-07-25 → 2026-10-23 (55 day-dated incidents) vs baseline 2025-07-25 → 2026-07-25 (382). Recent incidents by source: {'aiid': 55}.
+
+| Dimension | Category | Recent | Prior year | Share ratio | z | Example |
+|---|---|---:|---:|---:|---:|---|
+| cluster | claude / opus / production / anthropic | 16 | 39 | ×2.86 | 4.1 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
+| model family | anthropic | 9 | 18 | ×3.51 | 3.37 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
+| failure mode | agent misuse | 14 | 46 | ×2.13 | 2.86 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
+| mit subdomain | 2.2 AI system security vulnerabilities and attacks | 6 | 13 | ×3.29 | 2.62 | [Claude Opus 4.7 Reportedly Compromised Real Company's Production Infra](https://incidentdatabase.ai/cite/1627) |
+| failure mode | cyberattack | 7 | 17 | ×2.93 | 2.61 | [Claude Opus 4.7 Reportedly Compromised Real Company's Production Infra](https://incidentdatabase.ai/cite/1627) |
+| sector | technology software | 12 | 43 | ×1.97 | 2.35 | [Claude Opus 4.7 Reportedly Compromised Real Company's Production Infra](https://incidentdatabase.ai/cite/1627) |
+| sector | military security | 3 | 5 | ×4.35 | 2.2 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
+| model family | image video generator | 13 | 51 | ×1.79 | 2.16 | [Fraud Ring in Greece Allegedly Used AI-Cloned Relatives' Voices to Ste](https://incidentdatabase.ai/cite/1748) |
+
+68 categories were tested, so at z ≥ 2 about 2 flags are expected by chance alone. Treat flags as leads for an analyst.
+<!-- RESULTS:END -->
 
 ## Related work
 
@@ -47,9 +141,9 @@ What this adds: (1) a cross-database dedupe, so counts are not inflated by the A
 - **Labels are model-generated.** κ against humans is moderate at best for most fields (see validation). Use per-incident labels as triage, not ground truth. The MIT reference is itself LLM-generated, so agreement with it measures consistency with another model, not correctness.
 - **Severity is a coarse 1–5 judgment** from short text. It ranks incidents sensibly against CSET's human harm levels, but it is not calibrated to real-world harm magnitude.
 - **Community sources:** Reddit blocks unauthenticated JSON (HTTP 403), so it is currently skipped. HN coverage is limited to 40 search queries at ≥20 points, which biases the signal toward tech-industry stories (coding agents, LLM products).
-- **Dedupe** uses one embedding threshold per source pair. The LLM-judge audit estimates its precision, but some distinct incidents with near-identical wording (e.g. repeated lawyer-hallucination cases) can merge, and paraphrased duplicates can survive.
+- **Dedupe** depends on an LLM judge, which is itself fallible (in a spot-check of 24 random decisions during development, about 21 matched a careful reading). Pairs below the retrieval floor are never judged; the dedupe audit estimates how many duplicates that misses.
 - **Emerging signals** are a screening statistic (z ≥ 2 across ~100 tested categories means about 2–3 false flags expected by chance). They are leads for a human analyst, not findings.
-- Free-tier Gemini quotas (15 requests/min shared across projects) forced batching 20 records per call. Batch context could slightly bias labels compared with one call per record. This was not measured.
+- Free-tier Gemini quotas (500 requests/day for flash-lite, 20/day for flash, shared across six projects) forced batching 20–25 records per call and a flash-lite classifier. Batch context could slightly bias labels compared with one call per record. This was not measured.
 - No Hugging Face upload: no HF token was available.
 
 ## Reproduce
@@ -58,7 +152,7 @@ What this adds: (1) a cross-database dedupe, so counts are not inflated by the A
 git clone https://github.com/rishikeshn-eng/ai-incident-radar && cd ai-incident-radar
 uv venv .venv --python 3.11 && uv pip install --python .venv/bin/python -r requirements.txt
 export GEMINI_API_KEY=...        # free tier works; cached labels in labels/ make reruns cheap
-./run_all.sh                     # ingest -> dedupe -> classify -> validate -> trends -> figures
+./run_all.sh                     # ingest -> dedupe -> classify -> validate -> trends -> figures -> report
 python -m http.server -d docs    # open http://localhost:8000
 ```
 

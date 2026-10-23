@@ -16,7 +16,6 @@ import random
 import re
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor
 from itertools import combinations
 
 import numpy as np
@@ -46,7 +45,9 @@ def boot(fn, *arrs):
 
 
 def agreement(y_true, y_pred) -> dict:
-    y_true, y_pred = np.asarray(y_true, dtype=object), np.asarray(y_pred, dtype=object)
+    clean = lambda v: "NA" if v is None or (isinstance(v, float) and np.isnan(v)) else str(v)
+    y_true = np.array([clean(v) for v in y_true], dtype=object)
+    y_pred = np.array([clean(v) for v in y_pred], dtype=object)
     return {
         "kappa": boot(lambda a, b: cohen_kappa_score(a, b), y_true, y_pred),
         "accuracy": boot(lambda a, b: accuracy_score(a, b), y_true, y_pred),
@@ -164,14 +165,15 @@ def human_baseline() -> dict:
         m = a.merge(b, on="uid", suffixes=("_a", "_b"))
         for key, col in (("sector_coarse", "sector_c"), ("tangible_harm_4class", "tangible"),
                          ("intentional_harm", "intentional")):
-            mm = m[(m[f"{col}_a"].astype(str).isin(["", "nan"]) == False) &
-                   (m[f"{col}_b"].astype(str).isin(["", "nan"]) == False)]
-            if len(mm) >= 10:
-                res[key].append({"n": int(len(mm)),
-                                 "kappa": round(float(cohen_kappa_score(
-                                     mm[f"{col}_a"].astype(str), mm[f"{col}_b"].astype(str))), 3)})
+            a_ = [str(x) for x in m[f"{col}_a"]]
+            b_ = [str(x) for x in m[f"{col}_b"]]
+            keep = [(x, y) for x, y in zip(a_, b_) if x not in ("", "nan", "None") and y not in ("", "nan", "None")]
+            if len(keep) >= 10:
+                res[key].append({"n": len(keep), "kappa": round(float(cohen_kappa_score(
+                    [k[0] for k in keep], [k[1] for k in keep])), 3)})
     summary = {}
     for k, v in res.items():
+        v = [x for x in v if x["kappa"] == x["kappa"]]  # drop undefined (single-class) pairs
         if v:
             w = np.array([x["n"] for x in v])
             summary[k] = {"pairs": v, "weighted_mean_kappa":
@@ -205,65 +207,42 @@ def aiaaic_eval(lab: pd.DataFrame, canon: pd.DataFrame) -> dict:
 
 
 # ------------------------------------------------------------------ dedupe audit
-JUDGE_PROMPT = """Do these two records describe the SAME real-world AI incident (same event, same system, same harmed party)? A news story about the incident counts as the same incident. Different incidents involving the same company or same type of harm are NOT the same.
-Answer with JSON {"same": true|false}.
+def dedupe_audit(per_bin: int = 30) -> dict:
+    """How many true duplicates sit *below* the candidate-retrieval threshold (never judged)?
 
-Record A: {a}
-
-Record B: {b}"""
-
-
-def dedupe_audit(model: str = "gemini-3.5-flash", per_bin: int = 25) -> dict:
-    from google import genai
-    from google.genai import types
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-    rec = pd.read_parquet(PROC / "records.parquet").set_index("uid")
+    Sample best-match pairs from similarity bins under the threshold, send them to the same
+    batched LLM judge, and report the duplicate rate per bin. Above the threshold, report the
+    judge's merge rate per bin from the production decisions.
+    """
+    from .dedupe import T_CAND_INC, T_CAND_NEWS, judge_pairs
+    rec = pd.read_parquet(PROC / "records.parquet").reset_index(drop=True)
+    pos = {u: i for i, u in enumerate(rec.uid)}
     pairs = pd.read_parquet(PROC / "dedupe_pairs.parquet")
-    cache_p = LABELS / f"dedupe_judge_{model}.jsonl"
-    cache = {(r["a"], r["b"]): r["same"] for r in read_jsonl(cache_p)}
-    bins = [0.70, 0.76, 0.80, 0.82, 0.84, 0.86, 0.88, 0.90, 0.93, 1.01]
+    dec = pd.read_parquet(PROC / "dedupe_decisions.parquet")
+    out = {"below_threshold": {}, "above_threshold": {}}
     sample = []
-    for kind in ("aiaaic-aiid", "news-incident"):
+    for kind, t in (("aiaaic-aiid", T_CAND_INC), ("news-incident", T_CAND_NEWS)):
         p = pairs[(pairs.kind == kind) & pairs.year_ok]
-        for lo, hi in zip(bins[:-1], bins[1:]):
+        for lo, hi in ((t - 0.12, t - 0.06), (t - 0.06, t)):
             g = p[(p.sim >= lo) & (p.sim < hi)]
-            sample.append(g.sample(min(per_bin, len(g)), random_state=0).assign(bin=f"{lo:.2f}-{hi:.2f}"))
+            g = g.sample(min(per_bin, len(g)), random_state=0).assign(bin=f"{lo:.2f}-{hi:.2f}", n_bin=len(g))
+            sample.append(g)
+        d = dec[dec.kind == kind]
+        for lo, hi in ((t, t + 0.04), (t + 0.04, t + 0.08), (t + 0.08, 1.01)):
+            g = d[(d.sim >= lo) & (d.sim < hi) & d.judged]
+            out["above_threshold"].setdefault(kind, {})[f"{lo:.2f}-{min(hi, 1):.2f}"] = {
+                "n": int(len(g)), "judged_same": round(float(g.same.mean()), 3) if len(g) else None}
     sample = pd.concat(sample)
-
-    def judge(row):
-        key = (row.a, row.b)
-        if key in cache:
-            return cache[key]
-        ra, rb = rec.loc[row.a], rec.loc[row.b]
-        prompt = JUDGE_PROMPT.replace("{a}", f"{ra.title} ({ra.date}). {ra.text[:600]}") \
-                             .replace("{b}", f"{rb.title} ({rb.date}). {rb.text[:600]}")
-        delay = 4
-        for _ in range(8):
-            try:
-                r = client.models.generate_content(
-                    model=model, contents=prompt,
-                    config=types.GenerateContentConfig(temperature=0, response_mime_type="application/json"))
-                same = bool(json.loads(r.text).get("same"))
-                with open(cache_p, "a") as f:
-                    f.write(json.dumps({"a": row.a, "b": row.b, "same": same}) + "\n")
-                return same
-            except Exception as e:
-                time.sleep(delay + random.random())
-                delay = min(delay * 2, 90)
-        return None
-
-    with ThreadPoolExecutor(4) as ex:
-        sample["same"] = list(ex.map(judge, sample.itertuples()))
+    verdict = judge_pairs(rec, [(pos[a], pos[b]) for a, b in zip(sample.a, sample.b)])
+    sample["same"] = [verdict.get((a, b)) for a, b in zip(sample.a, sample.b)]
     sample = sample[sample.same.notna()]
-    out = {"judge_model": model, "by_bin": {}}
+    est_missed = {}
     for (kind, b), g in sample.groupby(["kind", "bin"]):
-        out["by_bin"].setdefault(kind, {})[b] = {"n": int(len(g)), "frac_same": round(float(g.same.mean()), 3)}
-    from .dedupe import T_INC, T_NEWS
-    for kind, t in (("aiaaic-aiid", T_INC), ("news-incident", T_NEWS)):
-        g = sample[sample.kind == kind]
-        above = g[g.sim >= t]
-        out[f"{kind}_precision_above_threshold_sampled"] = round(float(above.same.mean()), 3) if len(above) else None
-        out[f"{kind}_missed_dupes_rate_below_threshold_sampled"] = round(float(g[g.sim < t].same.mean()), 3)
+        rate = float(g.same.astype(bool).mean())
+        out["below_threshold"].setdefault(kind, {})[b] = {"n_judged": int(len(g)), "dup_rate": round(rate, 3),
+                                                          "pairs_in_bin": int(g.n_bin.iloc[0])}
+        est_missed[kind] = est_missed.get(kind, 0) + rate * int(g.n_bin.iloc[0])
+    out["estimated_missed_duplicates_in_audited_bins"] = {k: int(round(v)) for k, v in est_missed.items()}
     sample.to_csv(RESULTS / "dedupe_audit_sample.csv", index=False)
     return out
 

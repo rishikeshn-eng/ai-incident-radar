@@ -24,7 +24,7 @@ from .taxonomy import (FAILURE_MODES, HARM_TYPES, MIT_SUBDOMAINS, MODEL_FAMILIES
 
 PROMPT_VERSION = "v1"
 DEFAULT_MODEL = "gemini-3.1-flash-lite"
-BATCH = 20
+BATCH = 25
 # Free-tier key shared by several projects: ~15 RPM per model in total. Self-limit hard.
 MIN_INTERVAL = float(os.environ.get("RADAR_MIN_INTERVAL", "10"))
 _last_call = [0.0]
@@ -113,34 +113,46 @@ class Classifier:
         self.lock = threading.Lock()
         self.cache = {(r["uid"], r["_hash"]): r for r in read_jsonl(self.cache_path)}
 
-    def _call(self, recs: list[dict]) -> list[dict]:
+    def _call(self, recs: list[dict]) -> tuple[list[dict], bool]:
+        """Returns (outputs, blocked). Rate limits and server errors are retried patiently;
+        an empty/blocked/unparseable response is reported so the caller can bisect the batch."""
         prompt = "\n\n---\n\n".join(render(r) for r in recs)
         cfg = self.types.GenerateContentConfig(
             system_instruction=SYSTEM, temperature=0.0,
             response_mime_type="application/json", response_schema=SCHEMA,
         )
-        delay = 4.0
-        for attempt in range(8):
+        delay, bad = 8.0, 0
+        for attempt in range(40):
             _wait_turn()
             try:
                 resp = self.client.models.generate_content(model=self.model, contents=prompt, config=cfg)
-                out = json.loads(resp.text)
-                if isinstance(out, list):
-                    return out
-            except Exception as e:  # 429 / 5xx / malformed JSON
+                if resp.text:
+                    out = json.loads(resp.text)
+                    if isinstance(out, list):
+                        return out, False
+                fr = resp.candidates[0].finish_reason if resp.candidates else resp.prompt_feedback
+                print(f"[classify] empty/invalid response for {len(recs)} recs (finish={fr})", file=sys.stderr)
+                bad += 1
+            except json.JSONDecodeError:
+                bad += 1
+            except Exception as e:  # 429 / 5xx / transient 404
                 msg = str(e)
-                if attempt == 7:
-                    print(f"[classify] giving up on batch: {msg[:200]}", file=sys.stderr)
-                    return []
-                if "429" not in msg and "RESOURCE_EXHAUSTED" not in msg and "503" not in msg \
-                        and "500" not in msg and "404" not in msg and "JSON" not in msg and "Expecting" not in msg:
+                if not any(c in msg for c in ("429", "RESOURCE_EXHAUSTED", "500", "503", "504", "404", "timed out")):
                     print(f"[classify] error: {msg[:200]}", file=sys.stderr)
-            time.sleep(delay + random.random() * 2)
-            delay = min(delay * 2, 120)
-        return []
+                    bad += 1
+            if bad >= 2:
+                return [], True
+            time.sleep(delay + random.random() * 3)
+            delay = min(delay * 1.6, 180)
+        print(f"[classify] giving up on batch of {len(recs)} after rate-limit retries", file=sys.stderr)
+        return [], False
 
     def run_batch(self, recs: list[dict]) -> int:
-        out = self._call(recs)
+        out, blocked = self._call(recs)
+        if blocked and len(recs) > 1:
+            # Blocked responses usually come from one sensitive record; bisect to isolate it.
+            mid = len(recs) // 2
+            return self.run_batch(recs[:mid]) + self.run_batch(recs[mid:])
         by_uid = {o.get("uid"): o for o in out if isinstance(o, dict)}
         # Fall back to positional matching if the model mangled uids.
         if len(by_uid) < len(recs) and len(out) == len(recs):
@@ -188,6 +200,11 @@ def main():
     # Classify source records (not merged groups) so labels are stable across dedupe changes;
     # each canonical incident inherits the label of its primary record.
     canon = pd.read_parquet(PROC / "records.parquet")
+    # Free-tier quota is 500 requests/day shared across projects: skip HN meta posts
+    # (Show/Launch/Ask/Tell HN), which are product launches and discussions, not incident reports.
+    meta = (canon["source"] == "hn") & canon["title"].str.match(r"^(Show|Launch|Ask|Tell) HN", case=False)
+    print(f"[classify] skipping {int(meta.sum())} HN meta posts")
+    canon = canon[~meta]
     if args.subset == "validation":
         canon = canon[canon["source"] == "aiid"]
     if args.limit:
