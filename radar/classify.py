@@ -29,6 +29,7 @@ BATCH = 25
 MIN_INTERVAL = float(os.environ.get("RADAR_MIN_INTERVAL", "10"))
 _last_call = [0.0]
 _rate_lock = threading.Lock()
+_daily_quota_hit = threading.Event()  # set on a per-day 429: stop calling, keep cached labels
 
 
 def _wait_turn():
@@ -123,6 +124,8 @@ class Classifier:
         )
         delay, bad = 8.0, 0
         for attempt in range(40):
+            if _daily_quota_hit.is_set():
+                return [], False
             _wait_turn()
             try:
                 resp = self.client.models.generate_content(model=self.model, contents=prompt, config=cfg)
@@ -137,6 +140,11 @@ class Classifier:
                 bad += 1
             except Exception as e:  # 429 / 5xx / transient 404
                 msg = str(e)
+                if "PerDay" in msg:
+                    if not _daily_quota_hit.is_set():
+                        print("[classify] daily quota exhausted; stopping (labels so far are cached)", file=sys.stderr)
+                    _daily_quota_hit.set()
+                    return [], False
                 if not any(c in msg for c in ("429", "RESOURCE_EXHAUSTED", "500", "503", "504", "404", "timed out")):
                     print(f"[classify] error: {msg[:200]}", file=sys.stderr)
                     bad += 1

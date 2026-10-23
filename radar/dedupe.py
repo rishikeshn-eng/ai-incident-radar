@@ -129,6 +129,9 @@ def judge_pairs(df: pd.DataFrame, cands: list[tuple[int, int]]) -> dict[tuple[st
                     out = {int(o["pair"]): bool(o["same"]) for o in json.loads(r.text) if "pair" in o}
                     return [(batch[k], out[k]) for k in range(len(batch)) if k in out]
                 except Exception as e:
+                    if "PerDay" in str(e):  # daily free-tier cap: unjudged pairs fall back to T_FALLBACK
+                        print("[judge] daily quota exhausted; skipping", file=sys.stderr, flush=True)
+                        return []
                     print(f"[judge] retry {attempt}: {str(e)[:120]}", file=sys.stderr, flush=True)
                     time.sleep(delay)
                     delay = min(delay * 2, 120)
