@@ -18,14 +18,14 @@
  "signals": [
   {
    "dimension": "cluster",
-   "category": 17,
-   "label": "claude / opus / production / anthropic",
-   "recent": 16,
-   "baseline": 39,
-   "recent_share": 0.2909,
-   "baseline_share": 0.1021,
-   "share_ratio": 2.86,
-   "z": 4.1,
+   "category": 26,
+   "label": "anthropic / claude / opus / compromised real",
+   "recent": 9,
+   "baseline": 12,
+   "recent_share": 0.1636,
+   "baseline_share": 0.0314,
+   "share_ratio": 5.2,
+   "z": 4.06,
    "flag": true,
    "examples": [
     {
@@ -417,8 +417,8 @@
   },
   {
    "dimension": "cluster",
-   "category": 31,
-   "label": "gender / bias / racial / showed",
+   "category": 10,
+   "label": "pricing / dynamic / buy box / fans",
    "recent": 1,
    "baseline": 0,
    "recent_share": 0.0182,
@@ -428,11 +428,32 @@
    "flag": false,
    "examples": [
     {
-     "uid": "aiid:1708",
-     "title": "Stanford University Acknowledged Using AI to Alter Student Photo for Campus Banners, Replacing Hispanic Student With Black Woman",
-     "date": "2026-09-21",
-     "url": "https://incidentdatabase.ai/cite/1708",
-     "severity": 2
+     "uid": "aiid:1729",
+     "title": "McDonald's Allegedly Used an AI Pricing Engine to Coordinate U.S. Menu Prices and Make Customers Overpay",
+     "date": "2026-10-02",
+     "url": "https://incidentdatabase.ai/cite/1729",
+     "severity": 1
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 27,
+   "label": "chatgpt / chatbots / invents / exposes user",
+   "recent": 1,
+   "baseline": 0,
+   "recent_share": 0.0182,
+   "baseline_share": 0.0,
+   "share_ratio": 20.52,
+   "z": 1.86,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1659",
+     "title": "Purported Hanover Institute for Public Policy Reportedly Targeted Chatbot Responses in Israeli Government-Backed Influence Campaign",
+     "date": "2026-08-14",
+     "url": "https://incidentdatabase.ai/cite/1659",
+     "severity": 3
     }
    ]
   },
@@ -578,27 +599,6 @@
   },
   {
    "dimension": "mit_subdomain",
-   "category": "6.1",
-   "label": "6.1 Power centralization and unfair distribution of benefits",
-   "recent": 1,
-   "baseline": 1,
-   "recent_share": 0.0182,
-   "baseline_share": 0.0026,
-   "share_ratio": 6.84,
-   "z": 1.68,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1729",
-     "title": "McDonald's Allegedly Used an AI Pricing Engine to Coordinate U.S. Menu Prices and Make Customers Overpay",
-     "date": "2026-10-02",
-     "url": "https://incidentdatabase.ai/cite/1729",
-     "severity": 1
-    }
-   ]
-  },
-  {
-   "dimension": "mit_subdomain",
    "category": "6.6",
    "label": "6.6 Environmental harm",
    "recent": 1,
@@ -619,9 +619,9 @@
    ]
   },
   {
-   "dimension": "cluster",
-   "category": 21,
-   "label": "pricing / dynamic / uber surge / price",
+   "dimension": "mit_subdomain",
+   "category": "6.1",
+   "label": "6.1 Power centralization and unfair distribution of benefits",
    "recent": 1,
    "baseline": 1,
    "recent_share": 0.0182,
@@ -641,43 +641,99 @@
   },
   {
    "dimension": "cluster",
-   "category": 8,
-   "label": "chatgpt / chat / invents / chatbots",
-   "recent": 1,
-   "baseline": 2,
-   "recent_share": 0.0182,
-   "baseline_share": 0.0052,
-   "share_ratio": 4.1,
-   "z": 1.38,
+   "category": 2,
+   "label": "turnitin / universities / gender / biases",
+   "recent": 2,
+   "baseline": 5,
+   "recent_share": 0.0364,
+   "baseline_share": 0.0131,
+   "share_ratio": 3.11,
+   "z": 1.51,
    "flag": false,
    "examples": [
     {
-     "uid": "aiid:1659",
-     "title": "Purported Hanover Institute for Public Policy Reportedly Targeted Chatbot Responses in Israeli Government-Backed Influence Campaign",
-     "date": "2026-08-14",
-     "url": "https://incidentdatabase.ai/cite/1659",
+     "uid": "aiid:1708",
+     "title": "Stanford University Acknowledged Using AI to Alter Student Photo for Campus Banners, Replacing Hispanic Student With Black Woman",
+     "date": "2026-09-21",
+     "url": "https://incidentdatabase.ai/cite/1708",
+     "severity": 2
+    },
+    {
+     "uid": "aiid:1710",
+     "title": "AI Agent Appearing to Originate from OpenAI Reportedly Attempted to Hack U.S. Department of Education Civil Rights Website",
+     "date": "2026-09-25",
+     "url": "https://incidentdatabase.ai/cite/1710",
+     "severity": 2
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 9,
+   "label": "reader / flock / license-plate / plate",
+   "recent": 2,
+   "baseline": 5,
+   "recent_share": 0.0364,
+   "baseline_share": 0.0131,
+   "share_ratio": 3.11,
+   "z": 1.51,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1747",
+     "title": "Florida Man Allegedly Threatened Lee County Sheriff with Purportedly AI-Generated Image Depicting Him Wounded and Fleeing Gunmen",
+     "date": "2026-09-29",
+     "url": "https://incidentdatabase.ai/cite/1747",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1761",
+     "title": "Haines City, Florida, Police Officer Allegedly Used Flock License-Plate Reader System to Track Estranged Wife",
+     "date": "2026-08-10",
+     "url": "https://incidentdatabase.ai/cite/1761",
      "severity": 3
     }
    ]
   },
   {
    "dimension": "cluster",
-   "category": 37,
-   "label": "shotspotter / gun / unreliable / finds",
-   "recent": 1,
-   "baseline": 2,
-   "recent_share": 0.0182,
-   "baseline_share": 0.0052,
-   "share_ratio": 4.1,
-   "z": 1.38,
+   "category": 1,
+   "label": "scam / ai-cloned / kidnapping / purported voice",
+   "recent": 4,
+   "baseline": 15,
+   "recent_share": 0.0727,
+   "baseline_share": 0.0393,
+   "share_ratio": 1.99,
+   "z": 1.33,
    "flag": false,
    "examples": [
     {
-     "uid": "aiid:1718",
-     "title": "Purportedly AI-Generated Image Reportedly Prompted Police Alert and Search for Nonexistent Venomous Viper in Santa Ana, California",
-     "date": "2026-09-28",
-     "url": "https://incidentdatabase.ai/cite/1718",
-     "severity": 2
+     "uid": "aiid:1648",
+     "title": "Hong Kong Man Reportedly Lost More Than HK$10 Million in WhatsApp Scam Using Purported AI-Generated Voice Impersonation of His Father",
+     "date": "2026-07-29",
+     "url": "https://incidentdatabase.ai/cite/1648",
+     "severity": 4
+    },
+    {
+     "uid": "aiid:1748",
+     "title": "Fraud Ring in Greece Allegedly Used AI-Cloned Relatives' Voices to Steal Money and Valuables",
+     "date": "2026-09-18",
+     "url": "https://incidentdatabase.ai/cite/1748",
+     "severity": 4
+    },
+    {
+     "uid": "aiid:1660",
+     "title": "Purportedly AI-Generated Videos Impersonating Miami Immigration Attorney Were Reportedly Used to Defraud Bronx Resident of $4,820",
+     "date": "2026-08-19",
+     "url": "https://incidentdatabase.ai/cite/1660",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1663",
+     "title": "Comedy Writer Bruce Vilanch Reportedly Sent Money in Purportedly AI-Assisted Scam Impersonating Fresh Air Host Terry Gross",
+     "date": "2026-08-18",
+     "url": "https://incidentdatabase.ai/cite/1663",
+     "severity": 3
     }
    ]
   },
@@ -781,43 +837,8 @@
   },
   {
    "dimension": "cluster",
-   "category": 4,
-   "label": "romance scam / defrauded / deepfake / elon",
-   "recent": 3,
-   "baseline": 12,
-   "recent_share": 0.0545,
-   "baseline_share": 0.0314,
-   "share_ratio": 1.91,
-   "z": 1.11,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1712",
-     "title": "Northern Ireland Victim Reportedly Lost £250,000 in Investment Scam Using Purportedly AI-Generated Video of Unnamed Financial Personality",
-     "date": "2026-09-07",
-     "url": "https://incidentdatabase.ai/cite/1712",
-     "severity": 4
-    },
-    {
-     "uid": "aiid:1711",
-     "title": "Purported Deepfake WhatsApp Scam Impersonating Tamil Nadu Chief Minister and Actor C. Joseph Vijay Reportedly Defrauded Bengaluru Security Guard of ₹104,000 (~$1,085.40)",
-     "date": "2026-09-09",
-     "url": "https://incidentdatabase.ai/cite/1711",
-     "severity": 3
-    },
-    {
-     "uid": "aiid:1715",
-     "title": "Russia-Linked Matryoshka Operators Reportedly Circulated Deepfake of Mother Jones Editor Claiming DNC Paid CNN $259 Million",
-     "date": "2026-09-22",
-     "url": "https://incidentdatabase.ai/cite/1715",
-     "severity": 3
-    }
-   ]
-  },
-  {
-   "dimension": "cluster",
-   "category": 18,
-   "label": "reader / flock / license-plate / plate",
+   "category": 24,
+   "label": "data centre / unpermitted / power / turbines",
    "recent": 1,
    "baseline": 3,
    "recent_share": 0.0182,
@@ -827,59 +848,59 @@
    "flag": false,
    "examples": [
     {
-     "uid": "aiid:1761",
-     "title": "Haines City, Florida, Police Officer Allegedly Used Flock License-Plate Reader System to Track Estranged Wife",
-     "date": "2026-08-10",
-     "url": "https://incidentdatabase.ai/cite/1761",
+     "uid": "aiid:1709",
+     "title": "New Jersey Regulators Found DataOne Operated 62 Unpermitted Natural-Gas Generators at Vineland AI Data Center",
+     "date": "2026-07-29",
+     "url": "https://incidentdatabase.ai/cite/1709",
      "severity": 3
     }
    ]
   },
   {
    "dimension": "cluster",
-   "category": 14,
-   "label": "disinformation / russian / soldiers / pentagon",
-   "recent": 5,
-   "baseline": 23,
-   "recent_share": 0.0909,
-   "baseline_share": 0.0602,
-   "share_ratio": 1.6,
-   "z": 1.04,
+   "category": 37,
+   "label": "github / openclaw / assistant / cloud",
+   "recent": 6,
+   "baseline": 29,
+   "recent_share": 0.1091,
+   "baseline_share": 0.0759,
+   "share_ratio": 1.51,
+   "z": 1.0,
    "flag": false,
    "examples": [
     {
-     "uid": "aiid:1701",
-     "title": "AI Chatbot Reportedly Misidentified Chinese Ship Cargo as Nuclear-Program Components, Prompting U.S. Military Interception Preparations",
+     "uid": "aiid:1693",
+     "title": "AI Agent Reportedly Exploited Application Vulnerabilities to Modify Personal Data and Access Invoices in Breach Reported to Spanish Data Protection Authority",
+     "date": "2026-09-14",
+     "url": "https://incidentdatabase.ai/cite/1693",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1714",
+     "title": "Z.ai's ZCode AI Coding Assistant Reportedly Uploaded Developers' Local Code Repositories to Alibaba Cloud Without Consent",
      "date": "2026-09-18",
-     "url": "https://incidentdatabase.ai/cite/1701",
-     "severity": 4
-    },
-    {
-     "uid": "aiid:1725",
-     "title": "Unverified 'Daniel Robson' Journalist Persona Reportedly Used AI-Assisted Content and an AI-Generated Headshot in Canadian Media",
-     "date": "2026-09-24",
-     "url": "https://incidentdatabase.ai/cite/1725",
+     "url": "https://incidentdatabase.ai/cite/1714",
      "severity": 3
     },
     {
-     "uid": "aiid:1744",
-     "title": "Allegedly AI-Generated Audio Bomb Threat Prompted Evacuations at the Port of Constanța, Romania",
-     "date": "2026-07-29",
-     "url": "https://incidentdatabase.ai/cite/1744",
+     "uid": "aiid:1734",
+     "title": "AI Coding Agents Reportedly Exposed Over 13,000 Internal Images from Hundreds of Organizations on Public GitHub Code Repositories",
+     "date": "2026-09-29",
+     "url": "https://incidentdatabase.ai/cite/1734",
      "severity": 3
     },
     {
-     "uid": "aiid:1759",
-     "title": "Purportedly AI-Generated Video Depicting a Police Officer Punching a Person Was Reportedly Shared as Footage from French Student Protests",
-     "date": "2026-10-07",
-     "url": "https://incidentdatabase.ai/cite/1759",
-     "severity": 3
+     "uid": "aiid:1674",
+     "title": "Instinct AI Personal Assistant Reportedly Sent Email From Moxxie Ventures Founder's Account Without Approval",
+     "date": "2026-08-21",
+     "url": "https://incidentdatabase.ai/cite/1674",
+     "severity": 2
     },
     {
-     "uid": "aiid:1616",
-     "title": "U.S. State Department Reportedly Presented AI-Generated Map That Mislabeled Every Labeled African Country",
-     "date": "2026-07-26",
-     "url": "https://incidentdatabase.ai/cite/1616",
+     "uid": "aiid:1675",
+     "title": "Instinct AI Personal Assistant Reportedly Summarized an AI Product Founder's Retained Emails After Google Access Was Disconnected",
+     "date": "2026-08-21",
+     "url": "https://incidentdatabase.ai/cite/1675",
      "severity": 2
     }
    ]
@@ -927,62 +948,6 @@
    ]
   },
   {
-   "dimension": "cluster",
-   "category": 32,
-   "label": "writing / translation / ai-written / language",
-   "recent": 1,
-   "baseline": 4,
-   "recent_share": 0.0182,
-   "baseline_share": 0.0105,
-   "share_ratio": 2.28,
-   "z": 0.88,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1750",
-     "title": "Zimbabwean Author's Prize-Winning Short Story Faced Investigation Over Disputed AI-Writing Allegations",
-     "date": "2026-10-06",
-     "url": "https://incidentdatabase.ai/cite/1750",
-     "severity": 1
-    }
-   ]
-  },
-  {
-   "dimension": "cluster",
-   "category": 11,
-   "label": "ai-cloned / scam / voice / transfer",
-   "recent": 3,
-   "baseline": 14,
-   "recent_share": 0.0545,
-   "baseline_share": 0.0366,
-   "share_ratio": 1.65,
-   "z": 0.87,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1648",
-     "title": "Hong Kong Man Reportedly Lost More Than HK$10 Million in WhatsApp Scam Using Purported AI-Generated Voice Impersonation of His Father",
-     "date": "2026-07-29",
-     "url": "https://incidentdatabase.ai/cite/1648",
-     "severity": 4
-    },
-    {
-     "uid": "aiid:1748",
-     "title": "Fraud Ring in Greece Allegedly Used AI-Cloned Relatives' Voices to Steal Money and Valuables",
-     "date": "2026-09-18",
-     "url": "https://incidentdatabase.ai/cite/1748",
-     "severity": 4
-    },
-    {
-     "uid": "aiid:1660",
-     "title": "Purportedly AI-Generated Videos Impersonating Miami Immigration Attorney Were Reportedly Used to Defraud Bronx Resident of $4,820",
-     "date": "2026-08-19",
-     "url": "https://incidentdatabase.ai/cite/1660",
-     "severity": 3
-    }
-   ]
-  },
-  {
    "dimension": "mit_subdomain",
    "category": "6.3",
    "label": "6.3 Economic and cultural devaluation of human effort",
@@ -1007,6 +972,90 @@
      "date": "2026-10-06",
      "url": "https://incidentdatabase.ai/cite/1750",
      "severity": 1
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 12,
+   "label": "articles / paper / journalists / article",
+   "recent": 3,
+   "baseline": 15,
+   "recent_share": 0.0545,
+   "baseline_share": 0.0393,
+   "share_ratio": 1.54,
+   "z": 0.76,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1725",
+     "title": "Unverified 'Daniel Robson' Journalist Persona Reportedly Used AI-Assisted Content and an AI-Generated Headshot in Canadian Media",
+     "date": "2026-09-24",
+     "url": "https://incidentdatabase.ai/cite/1725",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1726",
+     "title": "Canadian Novelist Reportedly Removed from French Prix Goncourt Longlist After Disputed AI-Writing Allegations",
+     "date": "2026-09-25",
+     "url": "https://incidentdatabase.ai/cite/1726",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1750",
+     "title": "Zimbabwean Author's Prize-Winning Short Story Faced Investigation Over Disputed AI-Writing Allegations",
+     "date": "2026-10-06",
+     "url": "https://incidentdatabase.ai/cite/1750",
+     "severity": 1
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 0,
+   "label": "candidate / deepfake / irish / saying",
+   "recent": 2,
+   "baseline": 10,
+   "recent_share": 0.0364,
+   "baseline_share": 0.0262,
+   "share_ratio": 1.63,
+   "z": 0.71,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1715",
+     "title": "Russia-Linked Matryoshka Operators Reportedly Circulated Deepfake of Mother Jones Editor Claiming DNC Paid CNN $259 Million",
+     "date": "2026-09-22",
+     "url": "https://incidentdatabase.ai/cite/1715",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1721",
+     "title": "Wisconsin U.S. Rep. Derrick Van Orden Reportedly Posted Grok Imagine Deepfakes Depicting Opponent Rebecca Cooke Saying Things She Did Not Say",
+     "date": "2026-08-04",
+     "url": "https://incidentdatabase.ai/cite/1721",
+     "severity": 3
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 18,
+   "label": "disinformation / russian / matryoshka / ukraine",
+   "recent": 1,
+   "baseline": 5,
+   "recent_share": 0.0182,
+   "baseline_share": 0.0131,
+   "share_ratio": 1.87,
+   "z": 0.69,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1702",
+     "title": "Russia-Linked Matryoshka Influence Operation Reportedly Used AI-Cloned Celebrity Voices and Fabricated News-Style Videos to Target Democratic Candidates Ahead of 2026 U.S. Midterms",
+     "date": "2026-09-10",
+     "url": "https://incidentdatabase.ai/cite/1702",
+     "severity": 4
     }
    ]
   },
@@ -1074,34 +1123,6 @@
    ]
   },
   {
-   "dimension": "cluster",
-   "category": 35,
-   "label": "citations / chatgpt / book / case",
-   "recent": 2,
-   "baseline": 11,
-   "recent_share": 0.0364,
-   "baseline_share": 0.0288,
-   "share_ratio": 1.49,
-   "z": 0.58,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1730",
-     "title": "California Lawsuit by Washington Man David Rosenthal Alleged ChatGPT Gave Unsafe Advice About Stopping a Mood Stabilizer",
-     "date": "2026-09-29",
-     "url": "https://incidentdatabase.ai/cite/1730",
-     "severity": 4
-    },
-    {
-     "uid": "aiid:1652",
-     "title": "Granola AI Notetaker Allegedly Captured and Transcribed Florida Meeting Participant Without Notice or Consent",
-     "date": "2026-07-30",
-     "url": "https://incidentdatabase.ai/cite/1652",
-     "severity": 3
-    }
-   ]
-  },
-  {
    "dimension": "sector",
    "category": "finance",
    "label": "finance",
@@ -1146,27 +1167,6 @@
      "title": "Purportedly AI-Generated Videos Impersonating Miami Immigration Attorney Were Reportedly Used to Defraud Bronx Resident of $4,820",
      "date": "2026-08-19",
      "url": "https://incidentdatabase.ai/cite/1660",
-     "severity": 3
-    }
-   ]
-  },
-  {
-   "dimension": "cluster",
-   "category": 36,
-   "label": "phishing / malware / ongoing / scam",
-   "recent": 1,
-   "baseline": 6,
-   "recent_share": 0.0182,
-   "baseline_share": 0.0157,
-   "share_ratio": 1.58,
-   "z": 0.51,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1664",
-     "title": "Broadway Performer and SiriusXM Host Seth Rudetsky Reportedly Lost Facebook Page Access in Purportedly AI-Assisted Scam Impersonating Comedian Nikki Glaser",
-     "date": "2026-08-18",
-     "url": "https://incidentdatabase.ai/cite/1664",
      "severity": 3
     }
    ]
@@ -1298,41 +1298,6 @@
    ]
   },
   {
-   "dimension": "cluster",
-   "category": 23,
-   "label": "jailed / extort / man create / sexually explicit",
-   "recent": 3,
-   "baseline": 19,
-   "recent_share": 0.0545,
-   "baseline_share": 0.0497,
-   "share_ratio": 1.23,
-   "z": 0.36,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1722",
-     "title": "India-Based Sextortion Gang Allegedly Used AI-Generated Sexual Videos to Extort Canada-Based Indian Victim",
-     "date": "2026-09-10",
-     "url": "https://incidentdatabase.ai/cite/1722",
-     "severity": 4
-    },
-    {
-     "uid": "aiid:1683",
-     "title": "Delhi Man Allegedly Used AI to Create and Circulate Obscene Images of College Acquaintance",
-     "date": "2026-09-09",
-     "url": "https://incidentdatabase.ai/cite/1683",
-     "severity": 3
-    },
-    {
-     "uid": "aiid:1747",
-     "title": "Florida Man Allegedly Threatened Lee County Sheriff with Purportedly AI-Generated Image Depicting Him Wounded and Fleeing Gunmen",
-     "date": "2026-09-29",
-     "url": "https://incidentdatabase.ai/cite/1747",
-     "severity": 3
-    }
-   ]
-  },
-  {
    "dimension": "model_family",
    "category": "xai",
    "label": "xai",
@@ -1357,27 +1322,6 @@
      "date": "2026-08-04",
      "url": "https://incidentdatabase.ai/cite/1721",
      "severity": 3
-    }
-   ]
-  },
-  {
-   "dimension": "cluster",
-   "category": 13,
-   "label": "deepfake pornography / non-consensual / porn / nonconsensual",
-   "recent": 1,
-   "baseline": 7,
-   "recent_share": 0.0182,
-   "baseline_share": 0.0183,
-   "share_ratio": 1.37,
-   "z": 0.35,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1643",
-     "title": "Wyoming Woman's Childhood Photograph Reportedly Used to Generate Thousands of Explicit Images with Grok",
-     "date": "2026-08-15",
-     "url": "https://incidentdatabase.ai/cite/1643",
-     "severity": 4
     }
    ]
   },
@@ -1432,8 +1376,43 @@
   },
   {
    "dimension": "cluster",
-   "category": 19,
-   "label": "school students / classmates / girls / nudes",
+   "category": 20,
+   "label": "chatgpt / planning / consulted / suicide",
+   "recent": 3,
+   "baseline": 20,
+   "recent_share": 0.0545,
+   "baseline_share": 0.0524,
+   "share_ratio": 1.17,
+   "z": 0.28,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1730",
+     "title": "California Lawsuit by Washington Man David Rosenthal Alleged ChatGPT Gave Unsafe Advice About Stopping a Mood Stabilizer",
+     "date": "2026-09-29",
+     "url": "https://incidentdatabase.ai/cite/1730",
+     "severity": 4
+    },
+    {
+     "uid": "aiid:1688",
+     "title": "Teenager in Quilmes, Argentina, Reportedly Consulted ChatGPT While Planning School Shooting Against Classmates",
+     "date": "2026-08-19",
+     "url": "https://incidentdatabase.ai/cite/1688",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1740",
+     "title": "Teen Hiker Required Helicopter Rescue After Reportedly Following Claude Chatbot Directions in British Columbia, Canada",
+     "date": "2026-10-03",
+     "url": "https://incidentdatabase.ai/cite/1740",
+     "severity": 3
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 22,
+   "label": "school students / classmates / nudes / nude",
    "recent": 3,
    "baseline": 20,
    "recent_share": 0.0545,
@@ -1462,6 +1441,27 @@
      "date": "2026-08-18",
      "url": "https://incidentdatabase.ai/cite/1746",
      "severity": 3
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 8,
+   "label": "chatgpt / bing / chat / provide",
+   "recent": 1,
+   "baseline": 8,
+   "recent_share": 0.0182,
+   "baseline_share": 0.0209,
+   "share_ratio": 1.21,
+   "z": 0.22,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1701",
+     "title": "AI Chatbot Reportedly Misidentified Chinese Ship Cargo as Nuclear-Program Components, Prompting U.S. Military Interception Preparations",
+     "date": "2026-09-18",
+     "url": "https://incidentdatabase.ai/cite/1701",
+     "severity": 4
     }
    ]
   },
@@ -1544,8 +1544,8 @@
   },
   {
    "dimension": "cluster",
-   "category": 12,
-   "label": "chatgpt / planning / consulted / teen",
+   "category": 21,
+   "label": "donald trump / faso / burkina / ibrahim",
    "recent": 2,
    "baseline": 15,
    "recent_share": 0.0364,
@@ -1555,17 +1555,52 @@
    "flag": false,
    "examples": [
     {
-     "uid": "aiid:1688",
-     "title": "Teenager in Quilmes, Argentina, Reportedly Consulted ChatGPT While Planning School Shooting Against Classmates",
-     "date": "2026-08-19",
-     "url": "https://incidentdatabase.ai/cite/1688",
+     "uid": "aiid:1639",
+     "title": "Turkish National Reportedly Posted a Purportedly AI-Generated Image Depicting Himself with Eric Trump While Promoting Trump Hotel Dubai",
+     "date": "2026-08-14",
+     "url": "https://incidentdatabase.ai/cite/1639",
      "severity": 3
     },
     {
-     "uid": "aiid:1740",
-     "title": "Teen Hiker Required Helicopter Rescue After Reportedly Following Claude Chatbot Directions in British Columbia, Canada",
-     "date": "2026-10-03",
-     "url": "https://incidentdatabase.ai/cite/1740",
+     "uid": "aiid:1699",
+     "title": "AI-Generated Images Purporting to Show Donald Trump Kissing White House Aide Natalie Harp Went Viral on Social Media",
+     "date": "2026-09-14",
+     "url": "https://incidentdatabase.ai/cite/1699",
+     "severity": 2
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 14,
+   "label": "citations / sanctioned / filed / lawyers",
+   "recent": 3,
+   "baseline": 22,
+   "recent_share": 0.0545,
+   "baseline_share": 0.0576,
+   "share_ratio": 1.06,
+   "z": 0.11,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1652",
+     "title": "Granola AI Notetaker Allegedly Captured and Transcribed Florida Meeting Participant Without Notice or Consent",
+     "date": "2026-07-30",
+     "url": "https://incidentdatabase.ai/cite/1652",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1727",
+     "title": "Nebraska Supreme Court Reportedly Struck Self-Represented Divorce Litigant's Appellate Brief Containing Purportedly AI-Generated Fictitious Citations",
+     "date": "2026-10-02",
+     "url": "https://incidentdatabase.ai/cite/1727",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1728",
+     "title": "Law Firm Shapiro Arato Bach Reportedly Filed Fictitious Case Citation and Misattributed Quotations Using Harvey's Legal AI Platform in New York Federal Court",
+     "date": "2026-09-22",
+     "url": "https://incidentdatabase.ai/cite/1728",
      "severity": 3
     }
    ]
@@ -1676,6 +1711,83 @@
    ]
   },
   {
+   "dimension": "cluster",
+   "category": 4,
+   "label": "deepfake porn / nonconsensual / pornography / non-consensual",
+   "recent": 3,
+   "baseline": 23,
+   "recent_share": 0.0545,
+   "baseline_share": 0.0602,
+   "share_ratio": 1.02,
+   "z": 0.03,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1643",
+     "title": "Wyoming Woman's Childhood Photograph Reportedly Used to Generate Thousands of Explicit Images with Grok",
+     "date": "2026-08-15",
+     "url": "https://incidentdatabase.ai/cite/1643",
+     "severity": 4
+    },
+    {
+     "uid": "aiid:1722",
+     "title": "India-Based Sextortion Gang Allegedly Used AI-Generated Sexual Videos to Extort Canada-Based Indian Victim",
+     "date": "2026-09-10",
+     "url": "https://incidentdatabase.ai/cite/1722",
+     "severity": 4
+    },
+    {
+     "uid": "aiid:1683",
+     "title": "Delhi Man Allegedly Used AI to Create and Circulate Obscene Images of College Acquaintance",
+     "date": "2026-09-09",
+     "url": "https://incidentdatabase.ai/cite/1683",
+     "severity": 3
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 32,
+   "label": "shotspotter / gun / shooting / misidentifies",
+   "recent": 4,
+   "baseline": 30,
+   "recent_share": 0.0727,
+   "baseline_share": 0.0785,
+   "share_ratio": 1.01,
+   "z": 0.02,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1744",
+     "title": "Allegedly AI-Generated Audio Bomb Threat Prompted Evacuations at the Port of Constanța, Romania",
+     "date": "2026-07-29",
+     "url": "https://incidentdatabase.ai/cite/1744",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1759",
+     "title": "Purportedly AI-Generated Video Depicting a Police Officer Punching a Person Was Reportedly Shared as Footage from French Student Protests",
+     "date": "2026-10-07",
+     "url": "https://incidentdatabase.ai/cite/1759",
+     "severity": 3
+    },
+    {
+     "uid": "aiid:1616",
+     "title": "U.S. State Department Reportedly Presented AI-Generated Map That Mislabeled Every Labeled African Country",
+     "date": "2026-07-26",
+     "url": "https://incidentdatabase.ai/cite/1616",
+     "severity": 2
+    },
+    {
+     "uid": "aiid:1718",
+     "title": "Purportedly AI-Generated Image Reportedly Prompted Police Alert and Search for Nonexistent Venomous Viper in Santa Ana, California",
+     "date": "2026-09-28",
+     "url": "https://incidentdatabase.ai/cite/1718",
+     "severity": 2
+    }
+   ]
+  },
+  {
    "dimension": "model_family",
    "category": "openai",
    "label": "openai",
@@ -1756,83 +1868,6 @@
      "date": "2026-09-28",
      "url": "https://incidentdatabase.ai/cite/1718",
      "severity": 2
-    }
-   ]
-  },
-  {
-   "dimension": "cluster",
-   "category": 6,
-   "label": "donald trump / depicts / depicting / obama",
-   "recent": 2,
-   "baseline": 17,
-   "recent_share": 0.0364,
-   "baseline_share": 0.0445,
-   "share_ratio": 0.98,
-   "z": -0.04,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1639",
-     "title": "Turkish National Reportedly Posted a Purportedly AI-Generated Image Depicting Himself with Eric Trump While Promoting Trump Hotel Dubai",
-     "date": "2026-08-14",
-     "url": "https://incidentdatabase.ai/cite/1639",
-     "severity": 3
-    },
-    {
-     "uid": "aiid:1699",
-     "title": "AI-Generated Images Purporting to Show Donald Trump Kissing White House Aide Natalie Harp Went Viral on Social Media",
-     "date": "2026-09-14",
-     "url": "https://incidentdatabase.ai/cite/1699",
-     "severity": 2
-    }
-   ]
-  },
-  {
-   "dimension": "cluster",
-   "category": 9,
-   "label": "citations / case / brief / sanctioned",
-   "recent": 2,
-   "baseline": 18,
-   "recent_share": 0.0364,
-   "baseline_share": 0.0471,
-   "share_ratio": 0.92,
-   "z": -0.12,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1727",
-     "title": "Nebraska Supreme Court Reportedly Struck Self-Represented Divorce Litigant's Appellate Brief Containing Purportedly AI-Generated Fictitious Citations",
-     "date": "2026-10-02",
-     "url": "https://incidentdatabase.ai/cite/1727",
-     "severity": 3
-    },
-    {
-     "uid": "aiid:1728",
-     "title": "Law Firm Shapiro Arato Bach Reportedly Filed Fictitious Case Citation and Misattributed Quotations Using Harvey's Legal AI Platform in New York Federal Court",
-     "date": "2026-09-22",
-     "url": "https://incidentdatabase.ai/cite/1728",
-     "severity": 3
-    }
-   ]
-  },
-  {
-   "dimension": "cluster",
-   "category": 34,
-   "label": "elections / kosovo / election / disinformation",
-   "recent": 1,
-   "baseline": 11,
-   "recent_share": 0.0182,
-   "baseline_share": 0.0288,
-   "share_ratio": 0.89,
-   "z": -0.13,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1702",
-     "title": "Russia-Linked Matryoshka Influence Operation Reportedly Used AI-Cloned Celebrity Voices and Fabricated News-Style Videos to Target Democratic Candidates Ahead of 2026 U.S. Midterms",
-     "date": "2026-09-10",
-     "url": "https://incidentdatabase.ai/cite/1702",
-     "severity": 4
     }
    ]
   },
@@ -2132,49 +2167,21 @@
   },
   {
    "dimension": "cluster",
-   "category": 26,
-   "label": "investment / quantum / scam / investments",
-   "recent": 2,
-   "baseline": 25,
-   "recent_share": 0.0364,
-   "baseline_share": 0.0654,
-   "share_ratio": 0.67,
-   "z": -0.62,
-   "flag": false,
-   "examples": [
-    {
-     "uid": "aiid:1663",
-     "title": "Comedy Writer Bruce Vilanch Reportedly Sent Money in Purportedly AI-Assisted Scam Impersonating Fresh Air Host Terry Gross",
-     "date": "2026-08-18",
-     "url": "https://incidentdatabase.ai/cite/1663",
-     "severity": 3
-    },
-    {
-     "uid": "aiid:1665",
-     "title": "Purportedly AI-Generated Article Falsely Depicted Australian Broadcasting Corporation Finance Presenter Alan Kohler Interviewing Reserve Bank Governor Michele Bullock to Promote Boulder Sparhaven",
-     "date": "2026-08-17",
-     "url": "https://incidentdatabase.ai/cite/1665",
-     "severity": 3
-    }
-   ]
-  },
-  {
-   "dimension": "cluster",
-   "category": 29,
-   "label": "supplement / supplements / advertisement / weight",
+   "category": 30,
+   "label": "croatian / supplements / supplement / advertisement",
    "recent": 1,
-   "baseline": 17,
+   "baseline": 18,
    "recent_share": 0.0182,
-   "baseline_share": 0.0445,
-   "share_ratio": 0.59,
-   "z": -0.64,
+   "baseline_share": 0.0471,
+   "share_ratio": 0.55,
+   "z": -0.7,
    "flag": false,
    "examples": [
     {
-     "uid": "aiid:1721",
-     "title": "Wisconsin U.S. Rep. Derrick Van Orden Reportedly Posted Grok Imagine Deepfakes Depicting Opponent Rebecca Cooke Saying Things She Did Not Say",
-     "date": "2026-08-04",
-     "url": "https://incidentdatabase.ai/cite/1721",
+     "uid": "aiid:1664",
+     "title": "Broadway Performer and SiriusXM Host Seth Rudetsky Reportedly Lost Facebook Page Access in Purportedly AI-Assisted Scam Impersonating Comedian Nikki Glaser",
+     "date": "2026-08-18",
+     "url": "https://incidentdatabase.ai/cite/1664",
      "severity": 3
     }
    ]
@@ -2203,6 +2210,34 @@
      "title": "Unverified 'Daniel Robson' Journalist Persona Reportedly Used AI-Assisted Content and an AI-Generated Headshot in Canadian Media",
      "date": "2026-09-24",
      "url": "https://incidentdatabase.ai/cite/1725",
+     "severity": 3
+    }
+   ]
+  },
+  {
+   "dimension": "cluster",
+   "category": 6,
+   "label": "scam / investment / romance / cryptocurrency",
+   "recent": 2,
+   "baseline": 29,
+   "recent_share": 0.0364,
+   "baseline_share": 0.0759,
+   "share_ratio": 0.58,
+   "z": -0.85,
+   "flag": false,
+   "examples": [
+    {
+     "uid": "aiid:1712",
+     "title": "Northern Ireland Victim Reportedly Lost £250,000 in Investment Scam Using Purportedly AI-Generated Video of Unnamed Financial Personality",
+     "date": "2026-09-07",
+     "url": "https://incidentdatabase.ai/cite/1712",
+     "severity": 4
+    },
+    {
+     "uid": "aiid:1711",
+     "title": "Purported Deepfake WhatsApp Scam Impersonating Tamil Nadu Chief Minister and Actor C. Joseph Vijay Reportedly Defrauded Bengaluru Security Guard of ₹104,000 (~$1,085.40)",
+     "date": "2026-09-09",
+     "url": "https://incidentdatabase.ai/cite/1711",
      "severity": 3
     }
    ]
@@ -2258,28 +2293,21 @@
   },
   {
    "dimension": "cluster",
-   "category": 3,
-   "label": "erroneous / risk / predictive / biometric",
-   "recent": 2,
-   "baseline": 30,
-   "recent_share": 0.0364,
-   "baseline_share": 0.0785,
-   "share_ratio": 0.56,
-   "z": -0.9,
+   "category": 35,
+   "label": "investment / prime minister / scam / cryptocurrency",
+   "recent": 1,
+   "baseline": 22,
+   "recent_share": 0.0182,
+   "baseline_share": 0.0576,
+   "share_ratio": 0.46,
+   "z": -0.95,
    "flag": false,
    "examples": [
     {
-     "uid": "aiid:1709",
-     "title": "New Jersey Regulators Found DataOne Operated 62 Unpermitted Natural-Gas Generators at Vineland AI Data Center",
-     "date": "2026-07-29",
-     "url": "https://incidentdatabase.ai/cite/1709",
-     "severity": 3
-    },
-    {
-     "uid": "aiid:1726",
-     "title": "Canadian Novelist Reportedly Removed from French Prix Goncourt Longlist After Disputed AI-Writing Allegations",
-     "date": "2026-09-25",
-     "url": "https://incidentdatabase.ai/cite/1726",
+     "uid": "aiid:1665",
+     "title": "Purportedly AI-Generated Article Falsely Depicted Australian Broadcasting Corporation Finance Presenter Alan Kohler Interviewing Reserve Bank Governor Michele Bullock to Promote Boulder Sparhaven",
+     "date": "2026-08-17",
+     "url": "https://incidentdatabase.ai/cite/1665",
      "severity": 3
     }
    ]
@@ -2428,14 +2456,14 @@
  "flagged": [
   {
    "dimension": "cluster",
-   "category": 17,
-   "label": "claude / opus / production / anthropic",
-   "recent": 16,
-   "baseline": 39,
-   "recent_share": 0.2909,
-   "baseline_share": 0.1021,
-   "share_ratio": 2.86,
-   "z": 4.1,
+   "category": 26,
+   "label": "anthropic / claude / opus / compromised real",
+   "recent": 9,
+   "baseline": 12,
+   "recent_share": 0.1636,
+   "baseline_share": 0.0314,
+   "share_ratio": 5.2,
+   "z": 4.06,
    "flag": true,
    "examples": [
     {
