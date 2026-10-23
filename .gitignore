@@ -1,7 +1,7 @@
-data/
+/data/
 .venv/
 .env
 *.env
 __pycache__/
 .DS_Store
-cache/
+/cache/
