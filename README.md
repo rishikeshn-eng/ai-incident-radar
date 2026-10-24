@@ -32,22 +32,21 @@ This project builds the missing layer: a reproducible pipeline that merges these
 <!-- RESULTS:START -->
 ## Results
 
-*Generated 2026-10-23 from AIID snapshot `20261019101022`; classifier `gemini-3.1-flash-lite`.*
-
-> **Partial run.** The free-tier Gemini quota (500 requests/day, shared with other projects) ran out before every record was classified. Unclassified records are left out of the trends below and are picked up automatically by the next run. Coverage: aiaaic 1008/2259, aiid 1747/1751, hn 0/705.
+*Generated 2026-10-24 from AIID snapshot `20261019101022`; classifier `gemini-3.1-flash-lite`.*
 
 ### Data
 
 | Source | Records ingested | Classified | Canonical incidents (primary source) |
 |---|---:|---:|---:|
-| AI Incident Database | 1,751 | 1,747 | 1,726 |
-| AIAAIC Repository | 2,259 | 1,008 | 789 |
-| Hacker News (Algolia) | 1,282 | 0 | 0 |
+| AI Incident Database | 1,751 | 1,749 | 1,728 |
+| AIAAIC Repository | 2,259 | 2,257 | 1,771 |
+| Hacker News (Algolia) | 1,282 | 705 | 138 |
 | Reddit | 0 | 0 | 0 |
 
 - Reddit: skipped (HTTP 403 / unreachable).
 - 577 Show/Launch/Ask/Tell HN posts are skipped before classification (product launches and discussions, not incident reports). Of the HN stories classified, only those the classifier marks `is_ai_incident` enter the analysis.
-- **Dedupe:** 942 candidate pairs retrieved by embedding similarity; the LLM judge confirmed 586 (96% of candidates judged; the rest fell back to cosine ≥ 0.9). **421 AIAAIC entries merged into AIID incidents**, so naive concatenation would double-count about 19% of AIAAIC. 5,292 records → 4,718 canonical incidents; 2,515 enter the analysis.
+- **Dedupe:** 942 candidate pairs retrieved by embedding similarity; the LLM judge confirmed 586 (96% of candidates judged; the rest fell back to cosine ≥ 0.9). **421 AIAAIC entries merged into AIID incidents**, so naive concatenation would double-count about 19% of AIAAIC. 5,292 records → 4,718 canonical incidents; 3,637 enter the analysis.
+- **Dedupe audit** (pairs *below* the retrieval threshold, judged by the same LLM): aiaaic-aiid: cos 0.64-0.70 → 3% duplicates (n=30), cos 0.70-0.76 → 13% duplicates (n=30); news-incident: cos 0.62-0.68 → 23% duplicates (n=30), cos 0.68-0.74 → 0% duplicates (n=30). Estimated duplicates missed in those bins: {'aiaaic-aiid': 69, 'news-incident': 88}.
 
 ### Classifier validation
 
@@ -55,19 +54,19 @@ This project builds the missing layer: a reproducible pipeline that merges these
 
 | Reference labels | Field | n | Gemini κ [95% CI] | Accuracy | Human–human κ |
 |---|---|---:|---:|---:|---:|
-| MIT (LLM-generated, see note) | Risk domain (7) | 1494 | 0.64 [0.61, 0.67] | 0.72 | – |
-| MIT (LLM-generated, see note) | Risk subdomain (24) | 1494 | 0.56 [0.53, 0.58] | 0.61 | – |
-| MIT (LLM-generated, see note) | Entity (AI/Human/Other) | 1494 | 0.55 [0.51, 0.59] | 0.77 | – |
-| MIT (LLM-generated, see note) | Intent | 1494 | 0.80 [0.77, 0.83] | 0.90 | – |
-| MIT (LLM-generated, see note) | Timing | 1494 | 0.38 [0.22, 0.52] | 0.97 | – |
-| CSET v1 (human) | Sector, 10 coarse classes | 201 | 0.66 [0.58, 0.73] | 0.72 | 0.65 |
-| CSET v1 (human) | Intentional harm | 191 | 0.25 [0.06, 0.43] | 0.87 | 0.66 |
-| CSET v1 (human) | Severity vs tangible-harm level (Spearman ρ) | 198 | 0.36 [0.24, 0.48] | – | (4-class tangible harm κ = 0.70) |
-| CSET v1 (human) | Severity AUROC: tangible harm occurred | 198 | 0.69 [0.61, 0.76] | – | – |
-| CSET v1 (human) | Severity AUROC: lives lost > 0 | 213 | 0.95 [0.87, 0.99] | – | – |
-| AIAAIC (editorial) | Deepfake (technology tag) | 1274 | 0.76 [0.70, 0.81] | F1 0.78 | – |
-| AIAAIC (editorial) | Privacy (ethical-issue tag) | 1274 | 0.69 [0.64, 0.74] | F1 0.75 | – |
-| AIAAIC (editorial) | Fairness/bias (ethical-issue tag) | 1274 | 0.60 [0.54, 0.66] | F1 0.66 | – |
+| MIT (LLM-generated, see note) | Risk domain (7) | 1496 | 0.64 [0.61, 0.67] | 0.72 | – |
+| MIT (LLM-generated, see note) | Risk subdomain (24) | 1496 | 0.56 [0.53, 0.58] | 0.61 | – |
+| MIT (LLM-generated, see note) | Entity (AI/Human/Other) | 1496 | 0.55 [0.50, 0.59] | 0.77 | – |
+| MIT (LLM-generated, see note) | Intent | 1496 | 0.80 [0.77, 0.83] | 0.90 | – |
+| MIT (LLM-generated, see note) | Timing | 1496 | 0.38 [0.22, 0.52] | 0.97 | – |
+| CSET v1 (human) | Sector, 10 coarse classes | 201 | 0.66 [0.59, 0.74] | 0.72 | 0.65 |
+| CSET v1 (human) | Intentional harm | 191 | 0.25 [0.04, 0.45] | 0.87 | 0.66 |
+| CSET v1 (human) | Severity vs tangible-harm level (Spearman ρ) | 198 | 0.36 [0.23, 0.48] | – | (4-class tangible harm κ = 0.70) |
+| CSET v1 (human) | Severity AUROC: tangible harm occurred | 198 | 0.69 [0.62, 0.77] | – | – |
+| CSET v1 (human) | Severity AUROC: lives lost > 0 | 213 | 0.95 [0.86, 0.99] | – | – |
+| AIAAIC (editorial) | Deepfake (technology tag) | 2257 | 0.81 [0.78, 0.85] | F1 0.83 | – |
+| AIAAIC (editorial) | Privacy (ethical-issue tag) | 2257 | 0.74 [0.71, 0.77] | F1 0.80 | – |
+| AIAAIC (editorial) | Fairness/bias (ethical-issue tag) | 2257 | 0.61 [0.57, 0.65] | F1 0.68 | – |
 
 - **Sector** agreement with CSET's human annotators (κ 0.66) is in the range of CSET annotators agreeing with each other (κ 0.65). **Severity** ranks incidents with deaths almost perfectly (AUROC 0.95; mean severity 4.83 when lives were lost), but correlates only moderately with CSET's 4-level tangible-harm scale (ρ 0.36).
 - **Intentional harm is the weak field** (κ 0.25 vs human–human 0.66). Part of this is a construct mismatch: CSET asks whether the *system was designed* to harm, while the radar's `intent` asks whether *anyone* intended the harm, so a deepfake scam counts as intentional here but usually not in CSET.
@@ -82,46 +81,48 @@ Share of incidents tagged with each failure mode, 2022 vs 2025 (95% Wilson CIs).
 
 | Failure mode | 2022 | 2025 | Δ share |
 |---|---:|---:|---:|
-| deepfake | 12.1% [7.8%–18.3%] (18/149) | 36.8% [33.2%–40.6%] (240/652) | +24.7% |
-| fraud scam | 4.7% [2.3%–9.4%] (7/149) | 21.9% [18.9%–25.3%] (143/652) | +17.2% |
-| misinformation | 5.4% [2.8%–10.2%] (8/149) | 17.6% [14.9%–20.8%] (115/652) | +12.3% |
-| hallucination | 6.0% [3.2%–11.1%] (9/149) | 13.5% [11.1%–16.3%] (88/652) | +7.5% |
-| mental health | 0.7% [0.1%–3.7%] (1/149) | 6.0% [4.4%–8.1%] (39/652) | +5.3% |
-| agent misuse | 2.7% [1.1%–6.7%] (4/149) | 7.2% [5.5%–9.4%] (47/652) | +4.5% |
-| cyberattack | 0.0% [0.0%–2.5%] (0/149) | 4.0% [2.7%–5.8%] (26/652) | +4.0% |
-| sycophancy | 0.0% [0.0%–2.5%] (0/149) | 2.3% [1.4%–3.8%] (15/652) | +2.3% |
-| prompt injection | 1.3% [0.4%–4.8%] (2/149) | 1.7% [0.9%–3.0%] (11/652) | +0.3% |
-| autonomy loss of control | 0.0% [0.0%–2.5%] (0/149) | 0.1% [0.0%–0.9%] (1/652) | +0.1% |
-| ip copyright | 2.7% [1.1%–6.7%] (4/149) | 2.1% [1.3%–3.6%] (14/652) | -0.5% |
-| labor economic | 2.7% [1.1%–6.7%] (4/149) | 1.7% [0.9%–3.0%] (11/652) | -1.0% |
-| toxic content | 10.7% [6.7%–16.7%] (16/149) | 7.8% [6.0%–10.1%] (51/652) | -2.9% |
-| privacy | 12.1% [7.8%–18.3%] (18/149) | 7.7% [5.9%–10.0%] (50/652) | -4.4% |
-| bias | 10.7% [6.7%–16.7%] (16/149) | 2.8% [1.8%–4.3%] (18/652) | -8.0% |
-| physical safety | 13.4% [8.9%–19.8%] (20/149) | 3.8% [2.6%–5.6%] (25/652) | -9.6% |
-| robustness error | 32.9% [25.9%–40.8%] (49/149) | 15.2% [12.6%–18.1%] (99/652) | -17.7% |
+| deepfake | 10.1% [6.8%–14.7%] (23/228) | 34.6% [31.2%–38.2%] (242/699) | +24.5% |
+| fraud scam | 4.8% [2.7%–8.4%] (11/228) | 20.7% [17.9%–23.9%] (145/699) | +15.9% |
+| misinformation | 4.4% [2.4%–7.9%] (10/228) | 17.0% [14.4%–20.0%] (119/699) | +12.6% |
+| hallucination | 4.4% [2.4%–7.9%] (10/228) | 13.6% [11.2%–16.3%] (95/699) | +9.2% |
+| mental health | 0.4% [0.1%–2.4%] (1/228) | 6.2% [4.6%–8.2%] (43/699) | +5.7% |
+| agent misuse | 2.2% [0.9%–5.0%] (5/228) | 7.0% [5.3%–9.2%] (49/699) | +4.8% |
+| cyberattack | 0.9% [0.2%–3.1%] (2/228) | 3.7% [2.5%–5.4%] (26/699) | +2.8% |
+| sycophancy | 0.0% [0.0%–1.7%] (0/228) | 2.3% [1.4%–3.7%] (16/699) | +2.3% |
+| prompt injection | 0.9% [0.2%–3.1%] (2/228) | 2.1% [1.3%–3.5%] (15/699) | +1.3% |
+| autonomy loss of control | 0.0% [0.0%–1.7%] (0/228) | 0.1% [0.0%–0.8%] (1/699) | +0.1% |
+| toxic content | 9.2% [6.1%–13.7%] (21/228) | 8.2% [6.3%–10.4%] (57/699) | -1.1% |
+| ip copyright | 3.1% [1.5%–6.2%] (7/228) | 2.0% [1.2%–3.3%] (14/699) | -1.1% |
+| labor economic | 3.1% [1.5%–6.2%] (7/228) | 1.7% [1.0%–3.0%] (12/699) | -1.4% |
+| privacy | 16.2% [12.0%–21.6%] (37/228) | 7.9% [6.1%–10.1%] (55/699) | -8.4% |
+| bias | 12.3% [8.6%–17.2%] (28/228) | 3.0% [2.0%–4.5%] (21/699) | -9.3% |
+| physical safety | 14.5% [10.5%–19.6%] (33/228) | 4.4% [3.1%–6.2%] (31/699) | -10.0% |
+| robustness error | 32.0% [26.3%–38.3%] (73/228) | 15.9% [13.4%–18.8%] (111/699) | -16.1% |
 
 ![LLM share](docs/figures/llm_share.png)
 
-Incidents tied to a frontier-LLM vendor went from 15% [11%–22%] of the total in 2022 to 33% [29%–36%] in 2025.
+Incidents tied to a frontier-LLM vendor went from 12% [9%–17%] of the total in 2022 to 34% [30%–37%] in 2025.
 
 ### Emerging signals (last 90 days)
 
 ![Emerging signals](docs/figures/emerging_signals.png)
 
-Window 2026-07-25 → 2026-10-23 (55 day-dated incidents) vs baseline 2025-07-25 → 2026-07-25 (382). Recent incidents by source: {'aiid': 55}.
+Window 2026-07-26 → 2026-10-24 (88 day-dated incidents) vs baseline 2025-07-26 → 2026-07-26 (487). Recent incidents by source: {'aiid': 55, 'hn': 33}.
 
 | Dimension | Category | Recent | Prior year | Share ratio | z | Example |
 |---|---|---:|---:|---:|---:|---|
-| cluster | claude / opus / production / anthropic | 16 | 39 | ×2.86 | 4.1 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
-| model family | anthropic | 9 | 18 | ×3.51 | 3.37 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
-| failure mode | agent misuse | 14 | 46 | ×2.13 | 2.86 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
-| mit subdomain | 2.2 AI system security vulnerabilities and attacks | 6 | 13 | ×3.29 | 2.62 | [Claude Opus 4.7 Reportedly Compromised Real Company's Production Infra](https://incidentdatabase.ai/cite/1627) |
-| failure mode | cyberattack | 7 | 17 | ×2.93 | 2.61 | [Claude Opus 4.7 Reportedly Compromised Real Company's Production Infra](https://incidentdatabase.ai/cite/1627) |
-| sector | technology software | 12 | 43 | ×1.97 | 2.35 | [Claude Opus 4.7 Reportedly Compromised Real Company's Production Infra](https://incidentdatabase.ai/cite/1627) |
-| sector | military security | 3 | 5 | ×4.35 | 2.2 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
-| model family | image video generator | 13 | 51 | ×1.79 | 2.16 | [Fraud Ring in Greece Allegedly Used AI-Cloned Relatives' Voices to Ste](https://incidentdatabase.ai/cite/1748) |
+| cluster | production / deleted / claude opus / coding agents | 31 | 67 | ×2.56 | 5.15 | [OpenAI Codex agents go rogue and consumes USD 78,000 without authoriza](https://news.ycombinator.com/item?id=49861047) |
+| sector | technology software | 31 | 79 | ×2.17 | 4.4 | [OpenAI Codex agents go rogue and consumes USD 78,000 without authoriza](https://news.ycombinator.com/item?id=49861047) |
+| mit subdomain | 2.1 Compromise of privacy by obtaining, leaking or correctly inferring sensitive information | 15 | 29 | ×2.88 | 3.63 | [ZCode, the GLM coding agent, silently uploads your Git history](https://tokenstead.ai/guides/zcode-silent-git-history-upload) |
+| failure mode | privacy | 17 | 39 | ×2.43 | 3.37 | [ZCode, the GLM coding agent, silently uploads your Git history](https://tokenstead.ai/guides/zcode-silent-git-history-upload) |
+| failure mode | agent misuse | 21 | 56 | ×2.09 | 3.26 | [OpenAI Codex agents go rogue and consumes USD 78,000 without authoriza](https://news.ycombinator.com/item?id=49861047) |
+| model family | anthropic | 12 | 25 | ×2.69 | 3.04 | [Anthropic-Designated GTG-87001 Weapons Cell in Northern Yemen Reported](https://incidentdatabase.ai/cite/1687) |
+| cluster | chatgpt / bing chat / exposure / filtering | 5 | 5 | ×5.48 | 2.87 | [Iranian campaign planted fake articles in real U.S. publications using](https://www.washingtonpost.com/technology/2026/10/09/chatgpt-users-iran-planted-ai-generated-articles-us-news-media/) |
+| failure mode | cyberattack | 9 | 19 | ×2.67 | 2.6 | [AI fuels more than half of cybercrime in Africa as scams surge – Inter](https://www.africanews.com/2026/08/04/ai-fuels-more-than-half-of-cybercrime-in-africa-as-digital-scams-surge-interpol/) |
+| model family | openai | 17 | 50 | ×1.9 | 2.54 | [Iranian campaign planted fake articles in real U.S. publications using](https://www.washingtonpost.com/technology/2026/10/09/chatgpt-users-iran-planted-ai-generated-articles-us-news-media/) |
+| mit subdomain | 7.1 AI pursuing its own goals in conflict with human goals or values | 3 | 3 | ×5.48 | 2.28 | [OpenAI Codex agents go rogue and consumes USD 78,000 without authoriza](https://news.ycombinator.com/item?id=49861047) |
 
-68 categories were tested, so at z ≥ 2 about 2 flags are expected by chance alone. Treat flags as leads for an analyst.
+77 categories were tested, so at z ≥ 2 about 2 flags are expected by chance alone. Treat flags as leads for an analyst.
 <!-- RESULTS:END -->
 
 ## Related work
