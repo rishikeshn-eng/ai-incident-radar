@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="lab.css">
 <style>
 :root{--accent:var(--dye);--accent-soft:var(--dye-soft);--fg:var(--ink);--card:var(--surface);--code:var(--surface-2);--acc:var(--link);--a2:var(--c1);--ok:var(--good);--warn:var(--accent);--page:var(--bg);--grid:var(--line);--axis:var(--line-2);--border:var(--line);--wash:var(--accent-soft);--dye:#8C6100;--dye-dark:#F2B33D;}
-body>header:not(.labbar){max-width:1120px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+body>header:not(.labbar){position:relative;max-width:1120px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 main{padding-top:0}
 #asof{font:13px/1.5 var(--mono);color:var(--muted)}
 .chart{position:relative;height:300px}
@@ -26,6 +26,30 @@ th,td{white-space:normal;text-align:left}td.num,th.num{text-align:right;white-sp
 .sig ul{margin:10px 0 0;padding-left:18px;font-size:14px}
 .pager{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
 tr.inc:hover td{background:var(--accent-soft)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap">
+<style id="theme">
+:root:root:root{--bg:#FFF8DC;--surface:#FFFFFF;--surface-2:#FCEFB8;--ink:#141414;--ink-2:#2E2E2E;--muted:#55524A;--line:rgba(20,20,20,.14);--line-2:rgba(20,20,20,.28);--dye:#B3261E;--dye-dark:#B3261E;--on-dye:#FFFFFF;--dye-soft:rgba(255,212,0,.5);--link:#B3261E;--blk:#FFD400;--blk-ink:#141414;--display:'Archivo Black',system-ui,sans-serif;--h1-w:400;--h1-ls:-.02em;--plate-filter:none;--tex:radial-gradient(rgba(20,20,20,.09) 1px,transparent 1.5px) 0 0/6px 6px;--grain:.06;--color-scheme:light;}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex);opacity:var(--tex-o,1)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:220px;opacity:var(--grain,.08);mix-blend-mode:overlay}
+.labbar{background:var(--blk);border-bottom:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+.labbar .home,.labbar nav a,.labbar nav a.gh{color:var(--blk-ink)}
+.labbar nav a:hover{background:color-mix(in srgb,var(--blk-ink) 14%,transparent);color:var(--blk-ink)}
+.labbar .home i{background:var(--blk-ink);color:var(--blk)}
+h1,h2,h3,.readout,.verdict,.kpi b,.stat b,.tile .v,.stat .v{font-family:var(--display)}
+h1{font-size:clamp(38px,6.2vw,72px);line-height:1.02;letter-spacing:var(--h1-ls,-.02em);font-weight:var(--h1-w,800);max-width:18ch}
+.seal{background:var(--dye);color:var(--on-dye);border-color:var(--dye);box-shadow:6px 6px 0 var(--ink)}
+.kpis,.stats,.tiles,#headline.grid{background:var(--blk);border:0;gap:0;border-radius:var(--r);box-shadow:8px 8px 0 var(--ink)}
+.kpi,.stat,.tile,#headline .stat{background:transparent;border-left:1px solid color-mix(in srgb,var(--blk-ink) 22%,transparent)}
+.kpi b,.stat b,.tile .v,.stat .v,.kpi:first-child b,.stat:first-child b,.tile:first-child .v,#headline .stat:first-child .v{color:var(--blk-ink)}
+.kpi span,.stat span,.tile .l,.stat .k{color:color-mix(in srgb,var(--blk-ink) 85%,transparent)}
+.lab-panel{border:2px solid var(--ink);border-top:10px solid var(--dye);box-shadow:8px 8px 0 var(--ink)}
+.seg{background:color-mix(in srgb,var(--ink) 9%,transparent)}
+.seg button[aria-pressed="true"]{background:var(--dye);color:var(--on-dye);box-shadow:none}
+.track{background:color-mix(in srgb,var(--ink) 12%,transparent)}
+.card,.panel,.case,.tbl,.tablewrap,figure{border-color:color-mix(in srgb,var(--ink) 22%,transparent)}
+button.primary{box-shadow:4px 4px 0 var(--ink)}
+.labbar{border-bottom:10px solid transparent;border-image:repeating-linear-gradient(45deg,#FFD400 0 16px,#141414 16px 32px) 10}.labbar,.labbar .home,.labbar nav a,.labbar nav a.gh{background-color:#141414;color:#FFD400}.labbar .home i{background:#FFD400;color:#141414}.sig .card .ratio{color:#B3261E}
 </style>
 </head>
 <body>
