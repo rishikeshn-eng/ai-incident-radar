@@ -6,10 +6,10 @@
 <title>AI Incident Radar</title>
 <meta name="description" content="AI incident intelligence: AIID + AIAAIC + community reports, deduplicated, classified with Gemini into the MIT AI Risk taxonomy and safety failure modes, validated against human labels, with an emerging-signals detector.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="lab.css">
 <style>
-:root{--fg:var(--ink);--card:var(--surface);--code:var(--surface-2);--acc:var(--link);--a2:var(--c1);--ok:var(--good);--warn:var(--accent);--page:var(--bg);--grid:var(--line);--axis:var(--line-2);--border:var(--line);--wash:var(--accent-soft);}
+:root{--accent:var(--dye);--accent-soft:var(--dye-soft);--fg:var(--ink);--card:var(--surface);--code:var(--surface-2);--acc:var(--link);--a2:var(--c1);--ok:var(--good);--warn:var(--accent);--page:var(--bg);--grid:var(--line);--axis:var(--line-2);--border:var(--line);--wash:var(--accent-soft);--dye:#8C6100;--dye-dark:#F2B33D;}
 body>header:not(.labbar){max-width:1120px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
 main{padding-top:0}
 #asof{font:13px/1.5 var(--mono);color:var(--muted)}
@@ -29,9 +29,10 @@ tr.inc:hover td{background:var(--accent-soft)}
 </style>
 </head>
 <body>
-<header class="labbar"><div class="labbar-in"><a class="home" href="https://claude.ai/artifact/HFzmFTYLBw6n7KTCFKAdSQ"><i></i>Rishikesh · AI safety</a><nav aria-label="Sections"><a href="#emerging-signals-last-90-days">Signals</a><a href="#trends">Trends</a><a href="#does-the-classifier-agree-with-humans">Validation</a><a href="#incident-explorer">Explorer</a><a class="gh" href="https://github.com/rishikeshn-eng/ai-incident-radar">GitHub ↗</a></nav></div></header>
+<header class="labbar"><div class="labbar-in"><a class="home" href="https://claude.ai/artifact/HFzmFTYLBw6n7KTCFKAdSQ"><i>律</i>Rishikesh Nair</a><nav aria-label="Sections"><a class="ex" href="#explore">Explore</a><a href="#emerging-signals-last-90-days">Signals</a><a href="#trends">Trends</a><a href="#does-the-classifier-agree-with-humans">Validation</a><a href="#incident-explorer">Explorer</a><a class="gh" href="https://github.com/rishikeshn-eng/ai-incident-radar">GitHub ↗</a></nav></div></header>
 <header>
-  <div class="eyebrow">Evidence generation</div>
+  <div class="seal" aria-hidden="true">録<small>roku · record</small></div>
+<div class="eyebrow">Evidence generation</div>
 <h1>AI Incident Radar</h1>
   <p class="sub">Aviation has accident investigators; AI mostly has news cycles. This pipeline merges the
   <a href="https://incidentdatabase.ai">AI Incident Database</a>, the <a href="https://www.aiaaic.org/aiaaic-repository">AIAAIC Repository</a>
@@ -42,6 +43,26 @@ tr.inc:hover td{background:var(--accent-soft)}
   <div class="tiles" id="tiles"></div>
 </header>
 <main>
+<section class="lab-panel" id="explore" aria-labelledby="explore-h">
+  <div class="ph"><h2 id="explore-h">Scrub through a decade of AI incidents</h2><span class="eyebrow">Explore</span></div>
+  <p class="how">Drag the year. Each band is one MIT risk domain's share of that year's recorded incidents; the arrow names the domain that grew most since the year before. Counts reflect reporting, not true incidence.</p>
+  <div class="pctl" style="display:grid;grid-template-columns:auto 1fr auto;gap:14px"><span class="lbl">Year</span><input type="range" id="ry" aria-label="Year"><span class="readout" id="ryv" style="margin:0"></span></div>
+  <div id="rbars"></div>
+  <p class="readout" id="rread" aria-live="polite" style="margin-top:16px"></p>
+  <p class="muted" id="rnote"></p>
+</section>
+<script>
+(()=>{let T;const $=i=>document.getElementById(i);const C=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--ink-2)"];
+function draw(){const b=T.by_domain,i=+$("ry").value,yr=b.years[i],keys=Object.keys(b.series);const tot=keys.reduce((a,k)=>a+(b.series[k][i]||0),0);
+  $("ryv").textContent=yr;
+  $("rbars").innerHTML=keys.map((k,j)=>{const v=(b.series[k][i]||0)/(tot||1);return `<div class="mrow"><span class="lab" title="${k}">${k.replace(", Failures & Limitations","")}</span><div class="track"><div class="fill" style="width:${100*v}%;background:${C[j]}"></div></div><span class="val">${(100*v).toFixed(0)}%</span></div>`}).join("");
+  let msg=`<em>${tot.toLocaleString()}</em> incidents recorded in ${yr}${yr>=T.last_full_year+1?" (year to date)":""}.`;
+  if(i>0){const tp=keys.reduce((a,k)=>a+(b.series[k][i-1]||0),0),mv=keys.map(k=>[k,(b.series[k][i]||0)/(tot||1)-(b.series[k][i-1]||0)/(tp||1)]).sort((a,c)=>c[1]-a[1])[0];
+    if(mv[1]>0)msg+=` ↑ <em>${mv[0].replace(", Failures & Limitations","")}</em> grew ${(100*mv[1]).toFixed(0)} share points.`}
+  $("rread").innerHTML=msg;$("rnote").textContent="Shares of canonical incidents after deduplication, by Gemini-classified MIT risk domain (κ 0.64 against reference labels)."}
+fetch("data/trends.json").then(r=>r.json()).then(d=>{T=d;const ys=d.by_domain.years,lo=Math.max(0,ys.indexOf(2015));const r=$("ry");r.min=lo;r.max=ys.length-1;r.value=ys.indexOf(d.last_full_year)>=0?ys.indexOf(d.last_full_year):ys.length-1;r.oninput=draw;draw()})})();
+</script>
+
   <h2 id="emerging-signals-last-90-days">Emerging signals, last 90 days</h2>
   <p class="sub">Categories whose share of dated incidents in the last 90 days is significantly higher than in the previous 365 days
   (log share-ratio z ≥ 2, at least 3 incidents). Share, not count, so overall growth in AI coverage does not flag everything.</p>
