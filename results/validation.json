@@ -1039,43 +1039,43 @@
         "kappa": {
           "value": 0.815,
           "ci95": [
-            0.775,
-            0.854
+            0.774,
+            0.855
           ],
-          "n": 2257
+          "n": 2258
         },
         "f1": 0.834,
         "ref_positive_rate": 0.09,
         "pred_positive_rate": 0.11,
-        "n": 2257
+        "n": 2258
       },
       "privacy": {
         "kappa": {
           "value": 0.74,
           "ci95": [
-            0.707,
-            0.77
+            0.71,
+            0.771
           ],
-          "n": 2257
+          "n": 2258
         },
         "f1": 0.803,
-        "ref_positive_rate": 0.288,
+        "ref_positive_rate": 0.287,
         "pred_positive_rate": 0.206,
-        "n": 2257
+        "n": 2258
       },
       "bias": {
         "kappa": {
           "value": 0.61,
           "ci95": [
-            0.568,
-            0.649
+            0.57,
+            0.65
           ],
-          "n": 2257
+          "n": 2258
         },
         "f1": 0.676,
         "ref_positive_rate": 0.228,
         "pred_positive_rate": 0.134,
-        "n": 2257
+        "n": 2258
       }
     }
   },

@@ -1021,3 +1021,5 @@
 {"a": "hn:45679307", "b": "aiaaic:AIAAIC1487", "same": false}
 {"a": "hn:46637723", "b": "aiid:1723", "same": false}
 {"a": "hn:45572130", "b": "aiid:1158", "same": false}
+{"a": "hn:45129031", "b": "hn:45215032", "same": false}
+{"a": "hn:49763822", "b": "hn:49762493", "same": true}
