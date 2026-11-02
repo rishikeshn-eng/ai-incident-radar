@@ -1,32 +1,32 @@
 {
- "generated_at": "2026-10-26T13:28:09+00:00",
- "aiid_snapshot": "20261019101022",
+ "generated_at": "2026-11-02T16:29:12+00:00",
+ "aiid_snapshot": "20261026101519",
  "ingest_counts": {
   "aiaaic": 2259,
-  "aiid": 1751,
-  "hn": 1281
+  "aiid": 1777,
+  "hn": 1279
  },
  "reddit_status": "skipped (HTTP 403 / unreachable)",
  "dedupe": {
-  "records": 5291,
-  "canonical": 4716,
+  "records": 5315,
+  "canonical": 4719,
   "records_by_source": {
    "aiaaic": 2259,
-   "aiid": 1751,
-   "hn": 1281
+   "aiid": 1777,
+   "hn": 1279
   },
   "canonical_by_primary_source": {
-   "aiaaic": 1772,
-   "aiid": 1730,
+   "aiid": 1755,
+   "aiaaic": 1750,
    "hn": 1214
   },
-  "aiaaic_merged_into_aiid": 422,
+  "aiaaic_merged_into_aiid": 441,
   "news_linked_to_known_incident": 34,
   "n_clusters": 40,
   "unclustered_frac": 0.0,
-  "candidate_pairs": 942,
-  "candidate_pairs_judged_same": 587,
-  "judge_coverage": 0.958,
+  "candidate_pairs": 949,
+  "candidate_pairs_judged_same": 609,
+  "judge_coverage": 0.985,
   "judge_model": "gemini-3.1-flash-lite",
   "thresholds": {
    "T_CAND_INC": 0.76,
@@ -35,11 +35,11 @@
    "TOPK": 2
   }
  },
- "n_incidents": 3635,
+ "n_incidents": 3637,
  "classifier": "gemini-3.1-flash-lite",
  "by_source_canonical": {
-  "aiaaic": 1771,
-  "aiid": 1728,
-  "hn": 136
+  "aiid": 1753,
+  "aiaaic": 1749,
+  "hn": 135
  }
 }
